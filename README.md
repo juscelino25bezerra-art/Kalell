@@ -27,6 +27,13 @@ Para instalar por cima do APK antigo, assine com a **mesma keystore**; com outra
 
 Sem `keystore.properties`, o release continua saindo sem assinatura, como antes.
 
+### Release pelo GitHub
+
+O workflow `.github/workflows/release.yml` gera o APK assinado e publica num GitHub Release:
+empurre uma tag (`git tag v6.0.1 && git push origin v6.0.1`) ou use *Actions › Release › Run workflow*
+(gera a pré-release `teste-N`). Sem secrets configurados ele assina com a chave **de teste** em `ci/`
+(ver `ci/README.md`); com os secrets `KALENDRIUM_*` usa a chave de verdade.
+
 ## Play Console
 
 - **Alarme exato:** o app declara `USE_EXACT_ALARM` para os lembretes tocarem no horário. Na Play Console, em
