@@ -58,7 +58,15 @@ data class Event(
     val description: String = "",
     val color: String = "#1a73e8",
     val remind: Int = -1,
+    /** Categoria do redesign 6.0 (Pessoal, Trabalho, Saúde, Estudo, Outro). Eventos antigos ficam em Pessoal. */
+    val category: Category = Category.PERSONAL,
+    /** Repetição a partir de [date]; [until] = última data ("" = sem fim). */
+    val repeat: Repeat = Repeat.NONE,
+    val until: String = "",
+    val location: String = "",
 ) {
+    val recurring: Boolean get() = repeat != Repeat.NONE
+
     /** Momento em que o lembrete deve tocar (eventos de dia inteiro usam 9:00 como referência). */
     fun reminderAt(): LocalDateTime? {
         if (remind < 0) return null
@@ -84,7 +92,15 @@ data class PersonalData(
 ) {
     /** Eventos agrupados por data e já ordenados (calculado uma vez por versão dos dados). */
     private val byDate: Map<String, List<Event>> by lazy {
-        events.groupBy { it.date }.mapValues { (_, v) -> v.sortedWith(compareBy<Event>({ !it.allDay }, { it.start }, { it.title.lowercase() })) }
+        events.groupBy { it.date }.mapValues { (_, v) -> v.sortedWith(ORDER) }
+    }
+
+    /** Eventos que se repetem (expandidos por [Agenda.eventsOn]). */
+    val repeating: List<Event> by lazy { events.filter { it.recurring } }
+
+    companion object {
+        /** Ordem dentro de um dia: primeiro os de dia inteiro, depois por horário e título. */
+        val ORDER: Comparator<Event> = compareBy<Event>({ !it.allDay }, { it.start }, { it.title.lowercase() })
     }
 
     /** Eventos do dia: primeiro os de dia inteiro, depois por horário. */
@@ -139,6 +155,10 @@ object Personal {
                     if (e.description.isNotEmpty()) put("description", e.description)
                     put("color", e.color)
                     if (e.remind >= 0) put("remind", e.remind)
+                    // chaves novas (6.0): versões anteriores ignoram e mostram só a primeira data
+                    put("category", e.category.key)
+                    if (e.recurring) { put("repeat", e.repeat.key); if (e.until.isNotEmpty()) put("until", e.until) }
+                    if (e.location.isNotEmpty()) put("location", e.location)
                 })
             }
         })
@@ -167,11 +187,16 @@ object Personal {
             end = str(o, "end")?.takeIf { isTime(it) && it >= start } ?: ""
         }
         val remind = int(o, "remind")?.takeIf { r -> r in REMINDER_MINUTES } ?: -1
+        val repeat = Repeat.of(str(o, "repeat"))
         return Event(
             id = id, date = date, title = title, kind = EventKind.of(str(o, "kind")), allDay = allDay, start = start, end = end,
             description = (str(o, "description") ?: "").take(500),
             color = Sanitize.cleanColor(str(o, "color"), "#1a73e8"),
             remind = remind,
+            category = Category.of(str(o, "category")),
+            repeat = repeat,
+            until = if (repeat == Repeat.NONE) "" else str(o, "until")?.takeIf { Dates.isDate(it) && it >= date } ?: "",
+            location = (str(o, "location") ?: "").trim().take(80),
         )
     }
 

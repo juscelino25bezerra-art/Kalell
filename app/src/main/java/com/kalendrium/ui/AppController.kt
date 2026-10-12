@@ -6,7 +6,10 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.TextMeasurer
+import com.kalendrium.domain.Agenda
 import com.kalendrium.domain.AppData
+import com.kalendrium.domain.Category
+import com.kalendrium.domain.Repeat
 import com.kalendrium.domain.Block
 import com.kalendrium.domain.CalendarMode
 import com.kalendrium.domain.DayNote
@@ -51,7 +54,18 @@ sealed interface Sheet {
     data class Settings(val tab: String) : Sheet
     data class EventEdit(val date: String, val existing: Event?, val start: String? = null) : Sheet
     data class DayNoteEdit(val date: String) : Sheet
+    /** Nova nota com escolha de data e de onde guardar (pessoal ou escala). */
+    data class QuickNote(val date: String) : Sheet
+    data object Search : Sheet
+    /** Próximos lembretes (sino da tela Hoje). */
+    data object Upcoming : Sheet
 }
+
+/** Abas da barra inferior (redesign 6.0). O botão "+" do meio cria um evento. */
+enum class Tab { TODAY, CALENDAR, SCHEDULES, NOTES }
+
+/** Filtro "Escala" da legenda do calendário (as demais chaves são as das categorias). */
+const val FILTER_SHIFT = "escala"
 
 /** Campos da folha de evento do calendário pessoal. */
 data class EventForm(
@@ -64,6 +78,10 @@ data class EventForm(
     val description: String,
     val color: String,
     val remind: Int,
+    val category: Category = Category.PERSONAL,
+    val repeat: Repeat = Repeat.NONE,
+    val until: String = "",
+    val location: String = "",
 )
 
 /** Diálogo próprio de mensagem/confirmação (substitui alert/confirm do PWA). */
@@ -78,6 +96,9 @@ data class CycleForm(
     val anchor: String,
     val keepPast: Boolean,
     val from: String,
+    /** Horário do turno ("HH:mm"; os dois vazios = sem horário). */
+    val shiftStart: String = "",
+    val shiftEnd: String = "",
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -123,6 +144,19 @@ class AppController(
     /** Menu de visualizações aberto. */
     var viewMenu by mutableStateOf(false)
 
+    /** Aba da barra inferior. O app sempre abre em Hoje. */
+    var tab by mutableStateOf(Tab.TODAY)
+        private set
+    /** Filtros desligados na legenda do calendário: [FILTER_SHIFT] e chaves de [Category]. */
+    var hidden by mutableStateOf(emptySet<String>())
+        private set
+    /** Nome usado na saudação da tela Hoje (só neste aparelho; não vai no backup). */
+    var userName by mutableStateOf("")
+        private set
+    /** Padrão em simulação na aba Escalas (null = nenhum). */
+    var simulation by mutableStateOf<com.kalendrium.domain.Block?>(null)
+        private set
+
     /** false enquanto os arquivos são lidos (a tela fica só com o fundo, por alguns milissegundos). */
     var loaded by mutableStateOf(false)
         private set
@@ -167,13 +201,20 @@ class AppController(
             previousAvailable = r.previous
             langPref = r.langPref
             lang = I18n.lang
+            userName = r.name
             loaded = true
+            // redesign 6.0: quem estava na paleta padrão antiga passa uma vez para a paleta nova (dá para voltar em Ajustes)
+            // (instalação nova já nasce na paleta nova e não grava nada aqui)
+            if (r.design == null && r.workStored && !r.workFailed) {
+                if (data.palette == "material") save(data.copy(palette = AppData.DEFAULT_PALETTE))
+                store.persist(DESIGN_KEY) { DESIGN_VERSION }
+            }
             if (r.workFailed || r.personalFailed) notify(READ_FAILED)
             // "cópia mantida" só quando a cópia foi de fato gravada; sem ela a chave fica bloqueada (READ_FAILED acima)
             r.work.warning?.let { notify(if (r.work.corruptRaw.isNullOrBlank() || r.workFailed) it else "$it " + L("Uma cópia dos dados originais foi mantida no aparelho.", "A copy of the original data was kept on the device.", "Se guardó una copia de los datos originales en el dispositivo.")) }
             r.personal.warning?.let { notify(if (r.personalFailed) it else "$it " + L("Uma cópia dos dados originais foi mantida no aparelho.", "A copy of the original data was kept on the device.", "Se guardó una copia de los datos originales en el dispositivo.")) }
             notifBlocked = platform.notificationsBlocked()
-            platform.syncReminders(personal.events)
+            syncReminders()
         }
     }
 
@@ -181,6 +222,7 @@ class AppController(
         val work: Codec.Loaded, val workFailed: Boolean,
         val personal: Personal.Loaded, val personalFailed: Boolean,
         val meta: String?, val mode: String?, val previous: Boolean, val langPref: String, val view: String?,
+        val name: String, val design: String?, val workStored: Boolean,
     )
 
     /** Leitura inicial (fora da thread principal). Dados inválidos são corrigidos e o original vai para o .bak. */
@@ -188,7 +230,8 @@ class AppController(
         // o idioma vem primeiro: os avisos e os nomes padrão abaixo já saem nele
         val langPref = I18n.pref(store.readSafe(I18n.PREF_KEY))
         I18n.lang = I18n.resolve(langPref, platform.systemLocale())
-        val work = Codec.load(store.readSafe(Codec.KEY), todayIso)
+        val workRaw = store.readSafe(Codec.KEY)
+        val work = Codec.load(workRaw, todayIso)
         // sem a cópia do original, a versão corrigida não pode gravar por cima dele
         work.corruptRaw?.let { if (!store.keepBak(BAK, BAK2, it)) store.block(Codec.KEY) }
         val personal = Personal.loadChecked(store.readSafe(Personal.KEY))
@@ -196,6 +239,7 @@ class AppController(
         return Initial(
             work, store.failed(Codec.KEY), personal, store.failed(Personal.KEY),
             store.readSafe(META), store.readSafe(Personal.MODE_KEY), hasPrevious(), langPref, store.readSafe(ViewMode.KEY),
+            cleanName(store.readSafe(NAME_KEY)), store.readSafe(DESIGN_KEY), workRaw != null,
         )
     }
 
@@ -230,8 +274,91 @@ class AppController(
     // ---------- persistência ----------
     /** Atualiza a tela na hora e grava em segundo plano. */
     private fun save(next: AppData) {
+        val before = data.current
         data = next
         store.persist(Codec.KEY) { Codec.encode(next) }
+        // "Nas minhas folgas" depende da escala ativa
+        if (next.current != before && personal.repeating.any { it.repeat == Repeat.OFF_DAYS && it.remind >= 0 }) syncReminders()
+    }
+
+    // ---------- agenda (pessoal + escala) ----------
+    /** Dia livre para "Nas minhas folgas" (folga ou período na escala ativa). */
+    val isOff: (LocalDate) -> Boolean get() {
+        val sch = if (ready) current else null
+        return { d -> Agenda.isOff(d, sch) }
+    }
+
+    /** Eventos do dia, com as ocorrências dos que se repetem. */
+    fun eventsOn(d: LocalDate): List<Event> = Agenda.eventsOn(personal, d, isOff)
+
+    /** Evento original de uma ocorrência (editar uma ocorrência edita a série). */
+    fun baseOf(e: Event): Event = personal.events.firstOrNull { it.id == e.id } ?: e
+
+    private fun syncReminders() = platform.syncReminders(Agenda.reminderEvents(personal, today, isOff))
+
+    /** Próximos lembretes (sino da tela Hoje): ocorrências com lembrete nos próximos `days` dias, pelo horário do aviso. */
+    fun upcomingReminders(days: Long = 7): List<Pair<Event, LocalDateTime>> {
+        val now = clock
+        val end = now.plusDays(days)
+        return Agenda.reminderEvents(personal, today, isOff, days).mapNotNull { e -> e.reminderAt()?.takeIf { it.isAfter(now) && !it.isAfter(end) }?.let { e to it } }
+            .sortedBy { it.second }
+    }
+
+    // ---------- abas, filtros e nome ----------
+    fun selectTab(t: Tab) {
+        if (t == tab) return
+        sheet = null
+        viewMenu = false
+        simulation = null
+        tab = t
+    }
+
+    fun toggleFilter(key: String) { hidden = if (key in hidden) hidden - key else hidden + key }
+
+    fun setName(name: String) {
+        val n = cleanName(name)
+        userName = n
+        store.persist(NAME_KEY) { n }
+    }
+
+    private fun cleanName(raw: String?): String = raw?.trim()?.replace(Regex("\\s+"), " ")?.take(30) ?: ""
+
+    fun openSearch() { sheet = Sheet.Search }
+    fun openUpcoming() { sheet = Sheet.Upcoming }
+    fun openQuickNote(date: String = Dates.iso(selected)) { sheet = Sheet.QuickNote(date) }
+
+    /** Nota criada pela tela Notas ou pelo atalho "Nota rápida": pessoal ou da escala ativa. */
+    fun submitQuickNote(date: String, text: String, toSchedule: Boolean) {
+        if (!Dates.isDate(date)) { notify(L("Informe uma data válida.", "Enter a valid date.", "Indique una fecha válida.")); return }
+        if (text.isBlank()) { notify(L("Escreva a nota.", "Write the note.", "Escriba la nota.")); return }
+        if (toSchedule && ready) {
+            val old = current.notes[date]
+            submitNote(date, listOfNotNull(old?.text?.takeIf { it.isNotBlank() }, text.trim()).joinToString("\n").take(500), old?.holiday ?: false, old?.color ?: "#f9ab00", old?.align ?: "center")
+        } else {
+            val old = personal.notes[date]
+            submitDayNote(date, listOfNotNull(old?.text?.takeIf { it.isNotBlank() }, text.trim()).joinToString("\n"), old?.color ?: "#f9ab00")
+        }
+    }
+
+    // ---------- simulação de padrão (aba Escalas) ----------
+    fun simulate(b: com.kalendrium.domain.Block?) { simulation = if (b == null || (current.blocks.size == 1 && current.blocks[0].w == b.w && current.blocks[0].o == b.o)) null else b }
+
+    /** Escala como ficaria com o padrão simulado (null = sem simulação). */
+    val simulated: Schedule? get() = simulation?.let { if (ready) Agenda.simulate(current, listOf(it), Agenda.simulationStart(today, current)) else null }
+
+    /** Aplica o padrão simulado a partir de amanhã, preservando os dias anteriores. */
+    fun applySimulation() = scope.launch {
+        val b = simulation ?: return@launch
+        if (!ready) return@launch
+        val sc = current
+        val from = Agenda.simulationStart(today, sc)
+        val f = Dates.iso(from)
+        val lost = sc.changes.count { it.date >= f }
+        val msg = L("Aplicar o padrão ${b.w}×${b.o} na escala \"${sc.name}\" a partir de ${Dates.fmt(from)}? Os dias anteriores continuam como estão.", "Apply the ${b.w}×${b.o} pattern to \"${sc.name}\" from ${Dates.fmt(from)}? Earlier days stay as they are.", "¿Aplicar el patrón ${b.w}×${b.o} al horario \"${sc.name}\" desde el ${Dates.fmt(from)}? Los días anteriores se mantienen.") +
+            (if (lost > 0) L(" $lost mudança(s) a partir dessa data serão removidas.", " $lost change(s) from that date on will be removed.", " Se eliminarán $lost cambio(s) desde esa fecha.") else "")
+        if (!confirm(msg)) return@launch
+        simulation = null
+        saveSchedule(Agenda.simulate(sc, listOf(b), from))
     }
 
     private fun saveSchedule(s: Schedule) = save(data.replace(s))
@@ -274,7 +401,7 @@ class AppController(
         I18n.lang = l
         lang = l
         // os textos das notificações são montados ao agendar
-        platform.syncReminders(personal.events)
+        syncReminders()
     }
 
     fun prevMonth() { showMonth(view.minusMonths(1)) }
@@ -407,10 +534,15 @@ class AppController(
         val nm = Sanitize.cleanName(f.name, "")
         val col = Sanitize.cleanColor(f.color, "")
         if (nm.isEmpty()) { notify(L("Informe o nome da escala.", "Enter the schedule name.", "Indique el nombre del horario.")); return false }
+        val hasStart = f.shiftStart.isNotEmpty()
+        val hasEnd = f.shiftEnd.isNotEmpty()
+        if (hasStart != hasEnd || (hasStart && (!Personal.isTime(f.shiftStart) || !Personal.isTime(f.shiftEnd)))) {
+            notify(L("Informe o início e o fim do turno, ou deixe os dois em branco.", "Enter the shift start and end, or leave both empty.", "Indique el inicio y el fin del turno, o deje ambos vacíos.")); return false
+        }
         if (mode == CycleMode.Edit && f.anchor == sc.anchor && blocks == sc.blocks) {
-            // só nome/cor: não mexe no histórico
+            // só nome/cor/turno: não mexe no histórico
             closeSheet()
-            saveSchedule(sc.copy(name = nm, color = col.ifEmpty { sc.color }))
+            saveSchedule(sc.copy(name = nm, color = col.ifEmpty { sc.color }, shiftStart = f.shiftStart, shiftEnd = f.shiftEnd))
             return true
         }
         val keep = mode == CycleMode.Edit && f.keepPast
@@ -420,11 +552,11 @@ class AppController(
             if (lastTo.isNotEmpty() && f.from <= lastTo) { notify(L("Escolha uma data posterior a ${Dates.fmt(lastTo)}, quando começa o período atual.", "Choose a date after ${Dates.fmt(lastTo)}, when the current period starts.", "Elija una fecha posterior al ${Dates.fmt(lastTo)}, cuando empieza el período actual.")); return false }
         } else if (sc.history.isNotEmpty() && !confirm(L("Recalcular o calendário inteiro descarta ${sc.history.size} período(s) preservado(s). Continuar?", "Recalculating the whole calendar discards ${sc.history.size} preserved period(s). Continue?", "Recalcular todo el calendario descarta ${sc.history.size} período(s) conservado(s). ¿Continuar?"))) return false
         val r = Engine.applyCycleEdit(sc, blocks, f.anchor, keep, f.from, f.rows.map { it.orig })
-        val updated = r.schedule.copy(name = nm, color = col.ifEmpty { sc.color })
+        val updated = r.schedule.copy(name = nm, color = col.ifEmpty { sc.color }, shiftStart = f.shiftStart, shiftEnd = f.shiftEnd)
         closeSheet()
         when (mode) {
             CycleMode.First -> {
-                val main = data.main.copy(anchor = updated.anchor, blocks = updated.blocks, changes = updated.changes, history = updated.history, name = updated.name, color = updated.color)
+                val main = data.main.copy(anchor = updated.anchor, blocks = updated.blocks, changes = updated.changes, history = updated.history, name = updated.name, color = updated.color, shiftStart = updated.shiftStart, shiftEnd = updated.shiftEnd)
                 save(data.copy(initialized = true, schedules = listOf(main) + data.groups))
             }
             CycleMode.New -> save(data.copy(schedules = data.schedules + updated, active = updated.id))
@@ -517,7 +649,11 @@ class AppController(
 
     // ---------- temas ----------
     fun setTheme(t: String) { save(data.copy(theme = t)) }
-    fun setPalette(p: String) { save(data.copy(palette = p)) }
+    fun setPalette(p: String) {
+        save(data.copy(palette = p))
+        // escolha feita à mão: a migração da 6.0 não troca mais a paleta
+        store.persist(DESIGN_KEY) { DESIGN_VERSION }
+    }
     fun setStyle(s: String) { save(data.copy(uiStyle = s)) }
     fun setDynamicColor(on: Boolean) { save(data.copy(dynamicColor = on)) }
     fun setHideRecents(on: Boolean) { save(data.copy(hideRecents = on)) }
@@ -603,7 +739,7 @@ class AppController(
         if (work != null) data = work
         if (pers != null) {
             personal = pers
-            platform.syncReminders(pers.events)
+            syncReminders()
         }
         previousAvailable = withContext(io) { hasPrevious() }
         return true
@@ -677,7 +813,7 @@ class AppController(
     private fun savePersonal(next: PersonalData) {
         personal = next
         store.persist(Personal.KEY) { Personal.encode(next) }
-        platform.syncReminders(next.events)
+        syncReminders()
     }
 
     /** Toque num dia do calendário pessoal: seleciona; no mesmo dia já selecionado, abre um novo evento. */
@@ -697,11 +833,13 @@ class AppController(
         if (!Dates.isDate(f.date)) { notify(L("Informe uma data válida.", "Enter a valid date.", "Indique una fecha válida.")); return false }
         if (!f.allDay && !Personal.isTime(f.start)) { notify(L("Informe o horário de início ou marque \"Dia inteiro\".", "Enter the start time or check \"All day\".", "Indique la hora de inicio o marque \"Todo el día\".")); return false }
         if (!f.allDay && f.end.isNotEmpty() && f.end < f.start) { notify(L("O horário final não pode ser anterior ao inicial.", "The end time can't be before the start time.", "La hora final no puede ser anterior a la inicial.")); return false }
+        if (f.repeat != Repeat.NONE && f.until.isNotEmpty() && (!Dates.isDate(f.until) || f.until < f.date)) { notify(L("A repetição deve terminar na data do evento ou depois.", "The repeat must end on or after the event date.", "La repetición debe terminar en la fecha del evento o después.")); return false }
         if (editing == null && personal.events.size >= Personal.MAX_EVENTS) { notify(L("Limite de ${Personal.MAX_EVENTS} eventos.", "Limit of ${Personal.MAX_EVENTS} events.", "Límite de ${Personal.MAX_EVENTS} eventos.")); return false }
         val e = Event(
             id = editing?.id ?: newEventId(), date = f.date, title = title.take(80), kind = f.kind, allDay = f.allDay,
             start = if (f.allDay) "" else f.start, end = if (f.allDay) "" else f.end,
             description = f.description.trim().take(500), color = Sanitize.cleanColor(f.color, "#1a73e8"), remind = f.remind,
+            category = f.category, repeat = f.repeat, until = if (f.repeat == Repeat.NONE) "" else f.until, location = f.location.trim().take(80),
         )
         closeSheet()
         savePersonal(personal.replace(e))
@@ -712,7 +850,8 @@ class AppController(
     }
 
     fun deleteEvent(e: Event) = scope.launch {
-        if (!confirm(L("Excluir \"${e.title}\"?", "Delete \"${e.title}\"?", "¿Eliminar \"${e.title}\"?"))) return@launch
+        val all = if (e.recurring) L(" Todas as repetições serão excluídas.", " All repeats will be deleted.", " Se eliminarán todas las repeticiones.") else ""
+        if (!confirm(L("Excluir \"${e.title}\"?", "Delete \"${e.title}\"?", "¿Eliminar \"${e.title}\"?") + all)) return@launch
         closeSheet()
         savePersonal(personal.remove(e.id))
     }
@@ -748,6 +887,10 @@ class AppController(
         const val BAK = Codec.KEY + ".bak"
         const val BAK2 = Codec.KEY + ".bak2"
         const val META = Codec.KEY + ".meta"
+        const val NAME_KEY = "kalendrium.name"
+        /** Marca que a migração visual da 6.0 já rodou (troca única da paleta padrão antiga pela nova). */
+        const val DESIGN_KEY = "kalendrium.design"
+        const val DESIGN_VERSION = "6"
         const val PERSONAL_BAK = Personal.KEY + ".bak"
         const val PERSONAL_BAK2 = Personal.KEY + ".bak2"
         /** O backup é gravado com indentação: 5.000 eventos ocupam ~2,2 MB. */

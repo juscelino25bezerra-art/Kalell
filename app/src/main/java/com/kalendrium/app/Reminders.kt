@@ -13,6 +13,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import com.kalendrium.R
+import com.kalendrium.domain.Agenda
+import com.kalendrium.domain.Codec
 import com.kalendrium.domain.Dates
 import com.kalendrium.domain.Event
 import com.kalendrium.domain.I18n
@@ -91,7 +93,12 @@ object Reminders {
         }
         val loaded = Personal.loadChecked(raw)
         if (loaded.corruptRaw != null && loaded.data.events.isEmpty()) return
-        sync(ctx, loaded.data.events)
+        // "Nas minhas folgas" precisa da escala ativa; sem ela (ou ilegível), essas repetições ficam só na data inicial
+        val today = java.time.LocalDate.now()
+        val work = runCatching {
+            android.util.AtomicFile(dataFile(ctx, Codec.KEY)).openRead().use { it.readBytes() }.toString(Charsets.UTF_8)
+        }.getOrNull()?.let { Codec.load(it, Dates.iso(today)).data }?.takeIf { it.initialized }?.current
+        sync(ctx, Agenda.reminderEvents(loaded.data, today, { d -> Agenda.isOff(d, work) }))
     }
 
     /** Fora do app (alarme, reinício do aparelho) o idioma vem do arquivo de preferência. */

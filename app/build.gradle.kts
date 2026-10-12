@@ -33,8 +33,8 @@ android {
         applicationId = "com.kalendrium"
         minSdk = 24
         targetSdk = 36
-        versionCode = 6
-        versionName = "5.3"
+        versionCode = 7
+        versionName = "6.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
