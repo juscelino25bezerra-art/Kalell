@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Backup automático do Android (Android 9 a 11): escalas e calendário pessoal.
+  requireFlags: só vai para a nuvem com criptografia de ponta a ponta (protegida pelo bloqueio de tela).
+  No Android 8 e anteriores o atributo não existe e o arquivo é ignorado nesse ponto.
+-->
+<full-backup-content>
+    <include domain="file" path="data/" requireFlags="clientSideEncryption" />
+    <!-- idioma do app: cada aparelho segue o próprio (README › Idiomas) -->
+    <exclude domain="file" path="data/kalendrium.lang.json" />
+</full-backup-content>

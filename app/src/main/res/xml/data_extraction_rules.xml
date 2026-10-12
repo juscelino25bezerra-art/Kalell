@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+: escalas e calendário pessoal no backup do aparelho e na transferência para um celular novo.
+  disableIfNoEncryptionCapabilities: o backup na nuvem só acontece com criptografia de ponta a ponta.
+-->
+<data-extraction-rules>
+    <cloud-backup disableIfNoEncryptionCapabilities="true">
+        <include domain="file" path="data/" />
+        <!-- idioma do app: cada aparelho segue o próprio (README › Idiomas) -->
+        <exclude domain="file" path="data/kalendrium.lang.json" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="file" path="data/" />
+        <exclude domain="file" path="data/kalendrium.lang.json" />
+    </device-transfer>
+</data-extraction-rules>

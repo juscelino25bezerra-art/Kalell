@@ -1,0 +1,11 @@
+.gradle/
+build/
+app/build/
+local.properties
+.idea/
+*.iml
+.kotlin/
+# assinatura do release: nunca vai para o repositório
+keystore.properties
+*.jks
+*.keystore
