@@ -255,27 +255,32 @@ fun DateField(value: String, onChange: (String) -> Unit, min: String? = null, mo
         Text(if (Dates.isDate(value)) Dates.fmt(value) else Dates.shortHint(), color = c.onSurface, fontSize = 16.sp, modifier = Modifier.weight(1f))
         Icon(AppIcons.CalendarToday, L("Escolher data", "Choose date", "Elegir fecha"), tint = c.onSurface, modifier = Modifier.size(22.dp))
     }
-    if (open) {
-        val minMillis = min?.takeIf { Dates.isDate(it) }?.let { Dates.parse(it).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli() }
-        val state = rememberDatePickerState(
-            initialSelectedDateMillis = if (Dates.isDate(value)) Dates.parse(value).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli() else null,
-            yearRange = 1900..2200,
-            selectableDates = object : SelectableDates {
-                override fun isSelectableDate(utcTimeMillis: Long) = minMillis == null || utcTimeMillis >= minMillis
-            },
-        )
-        DatePickerDialog(
-            onDismissRequest = { open = false },
-            confirmButton = {
-                AppButton("OK", {
-                    state.selectedDateMillis?.let { onChange(Dates.iso(Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate())) }
-                    open = false
-                }, kind = BtnKind.Text)
-            },
-            dismissButton = { AppButton(L("Cancelar", "Cancel", "Cancelar"), { open = false }, kind = BtnKind.Text) },
-            colors = DatePickerDefaults.colors(containerColor = c.surfaceContainer),
-        ) { DatePicker(state, colors = DatePickerDefaults.colors(containerColor = c.surfaceContainer)) }
-    }
+    if (open) DatePickDialog(value, { onChange(it); open = false }, { open = false }, min)
+}
+
+/** Seletor de data do Material 3 (DateField e os chips "Outra data"). */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DatePickDialog(value: String, onPick: (String) -> Unit, onDismiss: () -> Unit, min: String? = null) {
+    val c = Look.colors
+    val minMillis = min?.takeIf { Dates.isDate(it) }?.let { Dates.parse(it).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli() }
+    val state = rememberDatePickerState(
+        initialSelectedDateMillis = if (Dates.isDate(value)) Dates.parse(value).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli() else null,
+        yearRange = 1900..2200,
+        selectableDates = object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long) = minMillis == null || utcTimeMillis >= minMillis
+        },
+    )
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            AppButton("OK", {
+                state.selectedDateMillis?.let { onPick(Dates.iso(Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate())) } ?: onDismiss()
+            }, kind = BtnKind.Text)
+        },
+        dismissButton = { AppButton(L("Cancelar", "Cancel", "Cancelar"), onDismiss, kind = BtnKind.Text) },
+        colors = DatePickerDefaults.colors(containerColor = c.surfaceContainer),
+    ) { DatePicker(state, colors = DatePickerDefaults.colors(containerColor = c.surfaceContainer)) }
 }
 
 /** Linha com caixa de seleção, título e explicação (checkrow do PWA). */

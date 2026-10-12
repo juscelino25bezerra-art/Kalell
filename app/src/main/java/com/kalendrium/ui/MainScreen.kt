@@ -1,24 +1,21 @@
 package com.kalendrium.ui
 
-import com.kalendrium.domain.L
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -26,31 +23,27 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
@@ -58,17 +51,15 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kalendrium.domain.CalendarMode
 import com.kalendrium.domain.Dates
 import com.kalendrium.domain.Engine
+import com.kalendrium.domain.L
 import com.kalendrium.domain.Schedule
 import com.kalendrium.ui.theme.AppTheme
 import com.kalendrium.ui.theme.Look
 import com.kalendrium.ui.theme.hexColor
-import com.kalendrium.ui.theme.mix
 
 @Composable
 fun KalendriumApp(ctl: AppController) {
@@ -93,22 +84,17 @@ fun KalendriumApp(ctl: AppController) {
             },
         ) {
             // leitura inicial dos arquivos (fora da thread principal): só o fundo por alguns milissegundos
-            if (ctl.loaded) Column(Modifier.fillMaxSize()) {
-                TopBar(ctl)
-                Column(
-                    Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Column(Modifier.widthIn(max = 760.dp).fillMaxWidth().padding(start = 14.dp, end = 14.dp, top = 8.dp, bottom = 30.dp)) {
-                        TodayHeader(ctl)
-                        // a mesma tela nos dois modos: só os dados, as ações e os indicadores mudam (ver Views.kt)
-                        CalendarBody(ctl)
-                    }
-                    Spacer(Modifier.height(if (look.glass) 92.dp else 80.dp))
-                    Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
+            if (ctl.loaded) {
+                // Voltar fora de Hoje leva para Hoje (como as abas do Material 3)
+                BackHandler(enabled = ctl.tab != Tab.TODAY) { ctl.selectTab(Tab.TODAY) }
+                when (ctl.tab) {
+                    Tab.TODAY -> TodayScreen(ctl)
+                    Tab.CALENDAR -> CalendarScreen(ctl)
+                    Tab.SCHEDULES -> SchedulesScreen(ctl)
+                    Tab.NOTES -> NotesScreen(ctl)
                 }
+                BottomNav(ctl, Modifier.align(Alignment.BottomCenter))
             }
-            if (ctl.loaded) BottomBar(ctl, Modifier.align(Alignment.BottomCenter))
         }
         when (val s = ctl.sheet) {
             is Sheet.Cycle -> CycleSheet(ctl, s.target, s.mode)
@@ -119,6 +105,9 @@ fun KalendriumApp(ctl: AppController) {
             is Sheet.Settings -> SettingsSheet(ctl, s.tab)
             is Sheet.EventEdit -> EventSheet(ctl, s.date, s.existing, s.start)
             is Sheet.DayNoteEdit -> DayNoteSheet(ctl, s.date)
+            is Sheet.QuickNote -> QuickNoteSheet(ctl, s.date)
+            Sheet.Search -> SearchSheet(ctl)
+            Sheet.Upcoming -> UpcomingSheet(ctl)
             null -> Unit
         }
         if (ctl.monthPicker) MonthPickerDialog(ctl.view, { y, m -> ctl.goTo(y, m); ctl.monthPicker = false }, { ctl.monthPicker = false })
@@ -128,152 +117,88 @@ fun KalendriumApp(ctl: AppController) {
     }
 }
 
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+/** Área rolável de cada aba: largura máxima de leitura, espaço para a barra inferior e as barras do sistema. */
 @Composable
-private fun TopBar(ctl: AppController) {
-    val look = Look.current
-    val c = look.colors
-    Column(
-        Modifier.fillMaxWidth().background(if (look.glass) Color.Transparent else look.page.copy(alpha = .96f)).statusBarsPadding(),
-    ) {
-        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
-            Column(Modifier.widthIn(max = 760.dp).fillMaxWidth().padding(start = 14.dp, end = 14.dp, top = 10.dp, bottom = 10.dp)) {
-                // linha 1: título à esquerda; visualização e ajustes à direita
-                Row(Modifier.fillMaxWidth().padding(start = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        "Kalendrium", Modifier.weight(1f).padding(end = 8.dp),
-                        fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-.5).sp, color = c.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    )
-                    ViewMenuButton(ctl)
-                    Spacer(Modifier.width(8.dp))
-                    RoundIconButton(Icons.Outlined.Settings, L("Configurações", "Settings", "Configuración"), { ctl.openSettings() }, solid = look.card)
-                }
-            }
-        }
+fun ScreenScroll(state: ScrollState = rememberScrollState(), content: @Composable ColumnScope.() -> Unit) {
+    Column(Modifier.fillMaxSize().verticalScroll(state), horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            Modifier.widthIn(max = 760.dp).fillMaxWidth().statusBarsPadding().padding(start = 16.dp, end = 16.dp, top = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+            content = content,
+        )
+        Spacer(Modifier.height(if (Look.current.glass) 118.dp else 104.dp))
+        Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
+    }
+}
+
+/** Título grande das abas Calendário, Escalas e Notas, com ações à direita. */
+@Composable
+fun ScreenTitle(title: String, modifier: Modifier = Modifier, actions: @Composable () -> Unit = {}) {
+    Row(modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(title, Modifier.weight(1f), fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-.6).sp, color = Look.colors.onSurface, maxLines = 1)
+        actions()
     }
 }
 
 /**
- * Pessoal | Work na largura toda e o card de hoje. Fica no início da área rolável (e não presa no topo),
- * para o calendário ganhar espaço quando a pessoa rola a tela.
+ * Barra inferior única do redesign: Hoje, Calendário, "+" (novo evento), Escalas e Notas.
+ * No estilo Liquid Glass vira uma pílula de vidro flutuante.
  */
 @Composable
-private fun TodayHeader(ctl: AppController) {
-    Column(Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
-        ModeSwitch(ctl.mode, ctl::selectMode, Modifier.fillMaxWidth().padding(bottom = 14.dp), fill = true)
-        when {
-            ctl.mode == CalendarMode.PERSONAL -> Hero(
-                Modifier.fillMaxWidth(),
-                info = personalSummary(ctl.personal, ctl.today, ctl.now()),
-                action = L("Novo evento", "New event", "Nuevo evento"), icon = Icons.Filled.Add, onAction = { ctl.openEvent(Dates.iso(ctl.today)) },
-                today = ctl.today,
-            )
-            ctl.ready -> WorkHero(ctl, Modifier.fillMaxWidth())
-            else -> Unit
-        }
-    }
-}
-
-/** Seletor segmentado Pessoal | Work: a opção ativa ganha fundo suave e ✓, a outra fica só com o texto. */
-@Composable
-fun ModeSwitch(mode: CalendarMode, onSelect: (CalendarMode) -> Unit, modifier: Modifier = Modifier, fill: Boolean = false) {
+private fun BottomNav(ctl: AppController, modifier: Modifier) {
     val look = Look.current
     val c = look.colors
-    val track = RoundedCornerShape(50)
-    Row(
-        modifier.then(if (look.glass) Modifier.glassSurface(track) else Modifier.clip(track).background(look.card).border(1.dp, c.outlineVar, track)).padding(3.dp),
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        CalendarMode.entries.forEach { m ->
-            val on = m == mode
-            val bg by animateColorAsState(if (on) c.primaryContainer else Color.Transparent, tween(160), label = "mode")
+    val items: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit = {
+        NavTab(KIcons.Home, L("Hoje", "Today", "Hoy"), ctl.tab == Tab.TODAY) { ctl.selectTab(Tab.TODAY) }
+        NavTab(KIcons.Calendar, L("Calendário", "Calendar", "Calendario"), ctl.tab == Tab.CALENDAR) { ctl.selectTab(Tab.CALENDAR) }
+        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+            val shape = RoundedCornerShape(20.dp)
+            Box(
+                Modifier.offset(y = if (look.glass) 0.dp else (-14).dp).size(58.dp).shadow(10.dp, shape, ambientColor = c.primary, spotColor = c.primary)
+                    .clip(shape).background(c.primary)
+                    .press { ctl.openEvent(if (ctl.tab == Tab.CALENDAR) Dates.iso(ctl.selected) else Dates.iso(ctl.today)) },
+                contentAlignment = Alignment.Center,
+            ) { Icon(KIcons.Plus, L("Novo evento", "New event", "Nuevo evento"), tint = c.onPrimary, modifier = Modifier.size(28.dp)) }
+        }
+        NavTab(KIcons.Briefcase, L("Escalas", "Schedules", "Horarios"), ctl.tab == Tab.SCHEDULES) { ctl.selectTab(Tab.SCHEDULES) }
+        NavTab(KIcons.Notes, L("Notas", "Notes", "Notas"), ctl.tab == Tab.NOTES) { ctl.selectTab(Tab.NOTES) }
+    }
+    if (look.glass) {
+        val shape = RoundedCornerShape(36.dp)
+        Box(modifier.fillMaxWidth().navigationBarsPadding().padding(bottom = 12.dp), contentAlignment = Alignment.Center) {
             Row(
-                (if (fill) Modifier.weight(1f) else Modifier).clip(RoundedCornerShape(50)).background(bg)
-                    .press(role = Role.Tab) { onSelect(m) }
-                    .semantics { selected = on }
-                    .heightIn(min = if (fill) 40.dp else 0.dp)
-                    .padding(start = if (on) 10.dp else 14.dp, end = 14.dp, top = 8.dp, bottom = 8.dp),
-                horizontalArrangement = Arrangement.Center,
+                Modifier.widthIn(max = 520.dp).padding(horizontal = 14.dp).fillMaxWidth().height(76.dp)
+                    .glassSurface(shape, strong = true).padding(horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (on) {
-                    Icon(Icons.Filled.Check, null, tint = c.onPrimaryContainer, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(4.dp))
-                }
-                Text(m.label, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = if (on) c.onPrimaryContainer else c.onSurfaceVar, maxLines = 1)
+            ) { items() }
+        }
+    } else {
+        Column(modifier.fillMaxWidth().background(look.card)) {
+            HorizontalDivider(color = c.outlineVar, thickness = 1.dp)
+            Box(Modifier.fillMaxWidth().navigationBarsPadding(), contentAlignment = Alignment.Center) {
+                Row(Modifier.widthIn(max = 560.dp).fillMaxWidth().height(74.dp).padding(horizontal = 6.dp), verticalAlignment = Alignment.CenterVertically) { items() }
             }
         }
     }
 }
 
-/**
- * Posição de hoje dentro do bloco atual, para a barrinha do card de hoje.
- * [total] = dias do bloco (trabalho + folga), [work] = dias de trabalho, [index] = dia de hoje (0 = primeiro).
- */
-data class BlockProgress(val total: Int, val work: Int, val index: Int, val label: String)
-
-/** Card superior: "Hoje · dia", a situação do dia em destaque, o restante do resumo e a ação principal do modo. */
 @Composable
-private fun Hero(
-    modifier: Modifier,
-    info: String,
-    action: String,
-    icon: ImageVector?,
-    onAction: () -> Unit,
-    today: java.time.LocalDate,
-    progress: BlockProgress? = null,
-) {
-    val look = Look.current
-    val c = look.colors
-    val shape = RoundedCornerShape(28.dp)
-    // o resumo vem como "Trabalho hoje  •  Próxima folga ...": a primeira parte vira o título do card
-    val parts = info.split("  •  ")
-    val headline = parts.first()
-    val detail = parts.drop(1).joinToString("\n")
-    val soft = c.onPrimary.copy(alpha = .78f)
+private fun androidx.compose.foundation.layout.RowScope.NavTab(icon: ImageVector, label: String, active: Boolean, onClick: () -> Unit) {
+    val c = Look.colors
+    val fg = if (active) c.onPrimaryContainer else c.onSurfaceVar
     Column(
-        modifier.clip(shape)
-            .background(if (look.glass) c.primary.copy(alpha = .86f) else c.primary)
-            .then(
-                if (look.glass) Modifier.drawBehind {
-                    drawRect(Brush.verticalGradient(listOf(Color.White.copy(alpha = .22f), Color.Transparent), endY = minOf(size.height * .5f, 64.dp.toPx())))
-                }.border(1.dp, Color.White.copy(alpha = .30f), shape) else Modifier,
-            )
-            .padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 18.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        Modifier.weight(1f).clip(RoundedCornerShape(16.dp)).press(role = Role.Tab, onClick = onClick).semantics { selected = active }.padding(vertical = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                L("Hoje", "Today", "Hoy") + " · ${Dates.dayMonth(today)}", Modifier.weight(1f),
-                fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = soft, maxLines = 1, overflow = TextOverflow.Ellipsis,
-            )
-            if (progress != null) {
-                Text(
-                    progress.label,
-                    Modifier.padding(start = 8.dp).clip(RoundedCornerShape(10.dp)).background(c.onPrimary.copy(alpha = .16f)).padding(horizontal = 10.dp, vertical = 5.dp),
-                    fontSize = 12.sp, fontWeight = FontWeight.Bold, color = c.onPrimary, maxLines = 1,
-                )
-            }
+        Box(
+            Modifier.size(width = 56.dp, height = 30.dp).clip(RoundedCornerShape(50)).background(if (active) c.primaryContainer else Color.Transparent),
+            contentAlignment = Alignment.Center,
+        ) {
+            // o texto abaixo já descreve o botão; descrição no ícone faria o TalkBack ler duas vezes
+            Icon(icon, null, tint = fg, modifier = Modifier.size(21.dp))
         }
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(headline, fontSize = 26.sp, lineHeight = 30.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-.5).sp, color = c.onPrimary)
-            if (detail.isNotEmpty()) Text(detail, fontSize = 15.sp, lineHeight = 21.sp, fontWeight = FontWeight.Medium, color = soft)
-        }
-        if (progress != null) {
-            // um segmento por dia do bloco: trabalho na cor do texto, folga na cor de folga; os já passados ficam cheios
-            Row(Modifier.fillMaxWidth().padding(top = 2.dp), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                repeat(progress.total) { i ->
-                    val isWork = i < progress.work
-                    val base = if (isWork) c.onPrimary else c.off
-                    Box(
-                        Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(50))
-                            .background(if (i <= progress.index) base else base.copy(alpha = .32f)),
-                    )
-                }
-            }
-        }
-        AppButton(action, onAction, Modifier.align(Alignment.End), kind = BtnKind.Inverse, icon = icon)
+        Text(label, fontSize = 11.sp, fontWeight = if (active) FontWeight.ExtraBold else FontWeight.SemiBold, color = fg, maxLines = 1)
     }
 }
 
@@ -301,19 +226,6 @@ fun workSummary(today: java.time.LocalDate, sch: Schedule): Pair<String, Boolean
     return listOfNotNull(current, upcoming, soon).joinToString("  •  ") to st.work
 }
 
-@Composable
-private fun WorkHero(ctl: AppController, modifier: Modifier) {
-    val sch = ctl.current
-    val (info, _) = workSummary(ctl.today, sch)
-    // em férias/licença o ciclo não descreve o dia, então a barrinha do bloco some
-    val progress = if (Engine.periodOn(Dates.iso(ctl.today), sch) != null) null else {
-        val st = Engine.status(ctl.today, sch)
-        val b = st.block
-        val total = b.w + b.o
-        if (total in 2..14) BlockProgress(total, b.w, if (st.work) st.n - 1 else b.w + st.n - 1, L("Bloco", "Block", "Bloque") + " ${b.w}×${b.o}") else null
-    }
-    Hero(modifier, info, L("Editar escala", "Edit schedule", "Editar horario"), Icons.Outlined.Edit, ctl::openCycle, ctl.today, progress)
-}
 
 /** "Gerando imagem…" enquanto a imagem ou o PDF são desenhados em segundo plano. */
 @Composable
@@ -340,52 +252,6 @@ fun WorkCards(ctl: AppController) {
     PeriodsCard(ctl)
 }
 
-@Composable
-fun WorkChips(ctl: AppController) {
-    val look = Look.current
-    val c = look.colors
-    Row(
-        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(start = 2.dp, end = 2.dp, top = 2.dp, bottom = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        val cur = ctl.current
-        ctl.data.schedules.forEach { s -> Chip(s, s.id == cur.id) { ctl.selectSchedule(s) } }
-        val shape = RoundedCornerShape(50)
-        Row(
-            Modifier.press(onClick = ctl::newSchedule).height(40.dp)
-                .then(if (look.glass) Modifier.glassSurface(shape) else Modifier.clip(shape).dashedBorder(c.outline, 20.dp))
-                .padding(start = 12.dp, end = 15.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(Icons.Filled.Add, null, tint = c.onSurface, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.width(5.dp))
-            Text(L("Nova escala", "New schedule", "Nuevo horario"), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = c.onSurface)
-        }
-    }
-}
-
-/** Escala como chip: a selecionada ganha ✓ e fundo na cor dela; as outras ficam com o ponto colorido. */
-@Composable
-private fun Chip(s: Schedule, on: Boolean, onClick: () -> Unit) {
-    val look = Look.current
-    val c = look.colors
-    val col = hexColor(s.color)
-    val shape = RoundedCornerShape(50)
-    val bg = when {
-        on && look.glass -> Modifier.clip(shape).background(mix(col, .26f, look.glassStrong)).border(1.5.dp, col, shape)
-        on -> Modifier.clip(shape).background(mix(col, .22f, c.surface)).border(1.5.dp, col, shape)
-        look.glass -> Modifier.glassSurface(shape)
-        else -> Modifier.clip(shape).background(look.card).border(1.dp, c.outlineVar, shape)
-    }
-    Row(
-        Modifier.press(onClick = onClick).semantics { selected = on }.height(40.dp).then(bg).padding(start = if (on) 10.dp else 13.dp, end = 15.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (on) Icon(Icons.Filled.Check, null, tint = c.onSurface, modifier = Modifier.size(16.dp)) else Dot(col, 10.dp)
-        Spacer(Modifier.width(7.dp))
-        Text(s.name, fontSize = 14.sp, fontWeight = if (on) FontWeight.ExtraBold else FontWeight.Bold, color = c.onSurface, maxLines = 1)
-    }
-}
 
 @Composable
 fun SectionCard(title: String, text: String, action: String, onAction: () -> Unit, content: @Composable () -> Unit) {
@@ -479,56 +345,3 @@ fun EmptySetupCard(onCreate: () -> Unit) {
     }
 }
 
-@Composable
-private fun BottomBar(ctl: AppController, modifier: Modifier) {
-    val look = Look.current
-    val c = look.colors
-    val items = @Composable {
-        // "Hoje" é a tela principal: leva o indicador em pílula, como na barra de navegação do Material 3
-        NavItem(AppIcons.Today, L("Hoje", "Today", "Hoy"), true, active = true, onClick = ctl::goToday)
-        if (ctl.mode == CalendarMode.PERSONAL) NavItem(Icons.Filled.Add, L("Evento", "Event", "Evento"), true) { ctl.openEvent() }
-        else NavItem(Icons.Outlined.Edit, L("Escala", "Schedule", "Horario"), ctl.ready, onClick = ctl::openCycle)
-        NavItem(Icons.Outlined.Settings, L("Ajustes", "Settings", "Ajustes"), true) { ctl.openSettings() }
-    }
-    if (look.glass) {
-        // pílula de vidro flutuante
-        val shape = RoundedCornerShape(36.dp)
-        Box(modifier.fillMaxWidth().navigationBarsPadding().padding(bottom = 12.dp), contentAlignment = Alignment.Center) {
-            Row(
-                Modifier.widthIn(max = 480.dp).padding(horizontal = 18.dp).fillMaxWidth().height(72.dp)
-                    .glassSurface(shape, strong = true).padding(horizontal = 6.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically,
-            ) { items() }
-        }
-    } else {
-        Column(modifier.fillMaxWidth().background(look.card)) {
-            HorizontalDivider(color = c.outlineVar, thickness = 1.dp)
-            Row(
-                Modifier.fillMaxWidth().navigationBarsPadding().height(80.dp),
-                horizontalArrangement = Arrangement.spacedBy(25.dp, Alignment.CenterHorizontally),
-                verticalAlignment = Alignment.CenterVertically,
-            ) { items() }
-        }
-    }
-}
-
-@Composable
-private fun NavItem(icon: ImageVector, label: String, enabled: Boolean, active: Boolean = false, onClick: () -> Unit) {
-    val c = Look.colors
-    val fg = if (active) c.onPrimaryContainer else c.onSurfaceVar
-    Column(
-        Modifier.width(84.dp).graphicsLayer { alpha = if (enabled) 1f else .45f }.press(enabled, onClick = onClick).padding(vertical = 6.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Box(
-            Modifier.size(width = 60.dp, height = 32.dp).clip(RoundedCornerShape(50)).background(if (active) c.primaryContainer else Color.Transparent),
-            contentAlignment = Alignment.Center,
-        ) {
-            // o texto abaixo já descreve o botão; descrição no ícone faria o TalkBack ler duas vezes
-            Icon(icon, null, tint = fg, modifier = Modifier.size(22.dp))
-        }
-        Text(label, fontSize = 12.sp, fontWeight = if (active) FontWeight.ExtraBold else FontWeight.SemiBold, color = fg)
-    }
-}

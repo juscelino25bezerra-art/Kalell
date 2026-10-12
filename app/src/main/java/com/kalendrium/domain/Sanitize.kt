@@ -169,10 +169,17 @@ object Sanitize {
                     id = id, name = cleanName(o["name"].str(), "Escala"), color = cleanColor(o["color"], "#0b8043"),
                     anchor = c.anchor, blocks = c.blocks, changes = c.changes,
                     history = cleanHist(o["history"]), notes = cleanNotes(o["notes"]), periods = cleanPeriods(o["periods"]),
-                )
+                ).withShift(o)
             )
         }
         return out
+    }
+
+    /** Horário do turno: só vale com início e fim válidos ("HH:mm"); senão fica sem horário. */
+    private fun Schedule.withShift(o: JsonObject): Schedule {
+        val a = o["shiftStart"].str()
+        val b = o["shiftEnd"].str()
+        return if (Personal.isTime(a) && Personal.isTime(b)) copy(shiftStart = a!!, shiftEnd = b!!) else this
     }
 
     // ---------- validação estrita (sem perdas) ----------
@@ -268,6 +275,7 @@ object Sanitize {
         }
         o["theme"]?.let { if (it.str() !in AppData.THEMES) return false }
         o["palette"]?.let { if (it.str() !in AppData.PALETTES) return false }
+        o["paletteX"]?.let { if (it.str() !in AppData.ALL_PALETTES) return false }
         o["uiStyle"]?.let { if (it.str() !in AppData.STYLES) return false }
         o["color"]?.let { if (!isHex(it)) return false }
         o["name"]?.let { if (it.str() == null) return false }
@@ -300,12 +308,13 @@ object Sanitize {
             history = if (blocks != null) cleanHist(o["history"]) else emptyList(),
             notes = cleanNotes(o["notes"]),
             periods = cleanPeriods(o["periods"]),
-        )
+        ).withShift(o)
         return AppData(
             // só `false` literal marca "sem escala ainda"; ausente = instalação antiga já configurada
             initialized = o["initialized"].bool() != false,
             theme = o["theme"].str()?.takeIf { it in AppData.THEMES } ?: "system",
-            palette = o["palette"].str()?.takeIf { it in AppData.PALETTES } ?: "material",
+            palette = o["paletteX"].str()?.takeIf { it in AppData.ALL_PALETTES }
+                ?: o["palette"].str()?.takeIf { it in AppData.PALETTES } ?: "material",
             uiStyle = o["uiStyle"].str()?.takeIf { it in AppData.STYLES } ?: "material",
             schedules = listOf(main) + groups,
             active = if (activeRaw != null && groups.any { it.id == activeRaw }) activeRaw else "",

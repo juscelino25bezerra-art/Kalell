@@ -65,7 +65,9 @@ fun CycleSheet(ctl: AppController, sc: Schedule, mode: CycleMode) {
     var anchor by rememberSaveable(sc) { mutableStateOf(sc.anchor) }
     var keep by rememberSaveable(sc) { mutableStateOf(false) }
     var from by rememberSaveable(sc) { mutableStateOf(ctl.defaultFrom(sc)) }
-    val dirty = rows.toList() != initialRows || name != sc.name || color != sc.color || anchor != sc.anchor || keep
+    var shiftStart by rememberSaveable(sc) { mutableStateOf(sc.shiftStart) }
+    var shiftEnd by rememberSaveable(sc) { mutableStateOf(sc.shiftEnd) }
+    val dirty = rows.toList() != initialRows || name != sc.name || color != sc.color || anchor != sc.anchor || keep || shiftStart != sc.shiftStart || shiftEnd != sc.shiftEnd
     AppSheet(
         onDismiss = ctl::closeSheet,
         title = if (mode == CycleMode.First) L("Criar primeira escala", "Create first schedule", "Crear primer horario") else L("Editar escala", "Edit schedule", "Editar horario"),
@@ -80,6 +82,15 @@ fun CycleSheet(ctl: AppController, sc: Schedule, mode: CycleMode) {
             Modifier.fillMaxWidth().padding(top = 5.dp, bottom = 12.dp), icon = Icons.Filled.Add,
         )
         Field(L("Nome da escala", "Schedule name", "Nombre del horario")) { AppTextField(name, { name = it }, maxLength = 30) }
+        Field(
+            L("Horário do turno (opcional)", "Shift hours (optional)", "Horario del turno (opcional)"),
+            help = L("Mostra quanto falta para o próximo turno, as horas do mês e avisa quando um evento cai no turno. Turno noturno: o fim pode ser no dia seguinte (ex.: 19:00 – 07:00).", "Shows the time to your next shift, the hours in the month and warns when an event falls on a shift. Night shift: the end can be on the next day (e.g. 19:00 – 07:00).", "Muestra cuánto falta para el próximo turno, las horas del mes y avisa cuando un evento cae en el turno. Turno de noche: el fin puede ser al día siguiente (ej.: 19:00 – 07:00)."),
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(Modifier.weight(1f)) { TimeField(shiftStart, { shiftStart = it; if (shiftEnd.isEmpty()) shiftEnd = plusHours(it, 8) }, clearable = true) }
+                Box(Modifier.weight(1f)) { TimeField(shiftEnd, { shiftEnd = it }, clearable = true) }
+            }
+        }
         Field(L("Cor da escala", "Schedule color", "Color del horario")) { ColorPicker(color, { color = it }, L("Cor da escala", "Schedule color", "Color del horario")) }
         Field(
             L("Data de referência", "Reference date", "Fecha de referencia"),
@@ -101,10 +112,16 @@ fun CycleSheet(ctl: AppController, sc: Schedule, mode: CycleMode) {
             if (ctl.canDelete(mode, sc)) AppButton(L("Excluir escala", "Delete schedule", "Eliminar horario"), { ctl.deleteSchedule(sc) }, kind = BtnKind.Danger)
             AppButton(L("Cancelar", "Cancel", "Cancelar"), ctl::closeSheet, kind = BtnKind.Text)
             AppButton(L("Salvar", "Save", "Guardar"), {
-                scope.launch { ctl.submitCycle(mode, sc, CycleForm(rows.toList(), name, color, anchor, keep, from)) }
+                scope.launch { ctl.submitCycle(mode, sc, CycleForm(rows.toList(), name, color, anchor, keep, from, shiftStart, shiftEnd)) }
             }, kind = BtnKind.Filled)
         }
     }
+}
+
+/** "07:00" + 8 h = "15:00" (passa da meia-noite como relógio). */
+private fun plusHours(t: String, h: Int): String {
+    val x = com.kalendrium.domain.Personal.time(t) ?: return ""
+    return x.plusHours(h.toLong()).toString()
 }
 
 /** Salva a lista de blocos do editor como texto simples (4 campos por bloco). */

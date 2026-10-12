@@ -61,6 +61,11 @@ object Codec {
         }
     }
 
+    /** Horário do turno (chaves novas do Kalendrium; o PWA ignora). */
+    private fun kotlinx.serialization.json.JsonObjectBuilder.shift(s: Schedule) {
+        if (s.shiftStart.isNotEmpty() && s.shiftEnd.isNotEmpty()) { put("shiftStart", s.shiftStart); put("shiftEnd", s.shiftEnd) }
+    }
+
     fun toJson(d: AppData, backup: Boolean = false, personal: PersonalData? = null): JsonObject {
         val m = d.main
         return buildJsonObject {
@@ -75,15 +80,18 @@ object Codec {
             put("notes", notes(m.notes))
             put("periods", periods(m.periods))
             put("theme", d.theme)
-            put("palette", d.palette)
+            put("palette", if (d.palette in AppData.PALETTES) d.palette else "material")
+            if (d.palette in AppData.EXTRA_PALETTES) put("paletteX", d.palette)
             put("uiStyle", d.uiStyle)
             put("name", m.name)
             put("color", m.color)
+            shift(m)
             put("groups", JsonArray(d.groups.map { g ->
                 buildJsonObject {
                     put("id", g.id); put("name", g.name); put("color", g.color)
                     put("anchor", g.anchor); put("blocks", blocks(g.blocks)); put("changes", changes(g.changes))
                     put("history", history(g.history)); put("notes", notes(g.notes)); put("periods", periods(g.periods))
+                    shift(g)
                 }
             }))
             put("active", d.active)

@@ -8,10 +8,10 @@ Migração completa do PWA **Minha Escala v4.11** (agora **Kalendrium**) para um
 2. Aguarde o *Gradle Sync* (baixa Gradle 8.13, AGP 8.13.0, Kotlin 2.1.0, Compose BOM 2024.12.01). Precisa do JDK 17 (o do Android Studio serve).
 3. Rode no aparelho/emulador (▶) ou gere o APK em *Build → Build App Bundle(s) / APK(s)*.
 4. Para testar rápido use `./gradlew assembleDebug`. O release (`assembleRelease`) passa pelo R8 e é bem mais demorado, principalmente em máquinas com pouca memória.
-5. Testes da lógica e do controlador: `./gradlew test` (86 testes, incluindo os do `tests/run.js` do PWA e os de endurecimento da auditoria 5.3).
+5. Testes da lógica e do controlador: `./gradlew test` (105 testes, incluindo os do `tests/run.js` do PWA e os de endurecimento da auditoria 5.3).
 6. Testes no aparelho/emulador: `./gradlew connectedAndroidTest` (gravação atômica dos arquivos e interface).
 
-`applicationId` = `com.kalendrium`, versão 5.3 (`versionCode 6`), `minSdk 24`, `compileSdk`/`targetSdk 36` (exigido pela Play Store para apps novos e atualizações desde 31/08/2026).
+`applicationId` = `com.kalendrium`, versão 6.0 (`versionCode 7`), `minSdk 24`, `compileSdk`/`targetSdk 36` (exigido pela Play Store para apps novos e atualizações desde 31/08/2026).
 Para instalar por cima do APK antigo, assine com a **mesma keystore**; com outra chave o Android pede para desinstalar antes
 (exporte um backup no app antigo e importe no novo).
 
@@ -34,6 +34,28 @@ Sem `keystore.properties`, o release continua saindo sem assinatura, como antes.
 - **Segurança dos dados:** nenhum dado é coletado nem compartilhado (sem internet, sem analytics). O backup automático do
   Android só envia dados com criptografia de ponta a ponta.
 
+## Conceito 6.0 (navegação por abas)
+
+O app segue o conceito de 4 telas (fundo azul-marinho, cartões escuros, ícones de traço) com a barra inferior
+**Hoje · Calendário · + · Escalas · Notas**. O botão central cria um evento de qualquer aba.
+
+- **Hoje**: saudação com o seu nome (toque para mudar), busca, sino com os lembretes dos próximos 7 dias, card do dia
+  com céu desenhado (folga/trabalho, próximo turno com horário), próximos 7 dias, agenda do dia, escala ativa e atalhos.
+- **Calendário**: Mês / Semana / Agenda, filtros por categoria e "Escala", grade com pontos dos eventos, barra do turno,
+  feriados em vermelho e painel do dia selecionado (o segundo toque no dia cria um evento).
+- **Novo evento**: categoria (Pessoal, Trabalho, Saúde, Estudo, Outro), Hoje/Amanhã/Outra data, aviso de conflito com o
+  turno (com sugestão de horário), dia todo, início/término, repetir (diário, semanal, mensal ou **nas folgas**, com data
+  final opcional), lembrete e local/descrição/cor.
+- **Escalas**: escala ativa com o bloco atual, os próximos 14 dias e o resumo do mês; **simulação** de padrões
+  (4×1, 4×2, 5×2, 6×1, 12×36) sem gravar nada até tocar em Aplicar; lista de escalas, ações e histórico de eras.
+- **Notas**: próximas e anteriores, pessoais e da escala; nota rápida que acrescenta ao texto já existente no dia.
+- Escala com **horário do turno** opcional (ex.: 07:00–15:00), usado no card de hoje, nos conflitos e na agenda.
+- Paleta nova **Kalendrium** (padrão; quem usava a paleta padrão antiga passa para ela uma vez, as outras 10 continuam).
+
+Compatibilidade: tudo o que é novo vai em chaves novas (`paletteX`, `shiftStart`/`shiftEnd`, `category`, `repeat`,
+`until`, `location`), que o PWA e as versões anteriores ignoram; `palette` continua gravada com um valor que elas aceitam.
+O nome do usuário e a aba ficam só no aparelho, fora do backup.
+
 ## Visual (redesign)
 
 - Fonte **Manrope** embutida em `res/font` (licença SIL OFL em `docs/MANROPE-OFL.txt`), aplicada em todo o app pelo `AppTheme`.
@@ -54,12 +76,18 @@ app/src/main/java/com/kalendrium/
     Engine.kt     status do dia, posições, mudanças, eras preservadas, remapChanges
     Sanitize.kt   cleanX/validX/sanitize portados 1:1 do app.js
     Codec.kt      JSON no formato do PWA (localStorage e backup version 3)
+    Agenda.kt     categorias, repetição, turnos, conflitos, simulação, busca e lembretes
     I18n.kt       idiomas (pt, en, es): L("pt", "en", "es"), datas e rótulos por idioma
   ui/       Compose: telas, folhas, tema e desenhos
     AppController.kt  estado + handlers do app.js (salvar, confirmar, importar…)
-    MainScreen.kt     topo com resumo de hoje, chips, calendário, mudanças, períodos, barra inferior
-    Views.kt          botão de grade e visualizações diária, semanal, mensal + diária, anual e lista de eventos
-    Calendar.kt       grade do mês (TRAB./FOLGA, bloco, notas, feriados, períodos, outras escalas)
+    MainScreen.kt     abas, barra inferior com o botão "+", folhas e cards de mudanças/períodos
+    TodayScreen.kt    aba Hoje (card do dia, próximos dias, agenda, atalhos)
+    CalendarScreen.kt aba Calendário (Mês / Semana / Agenda, filtros, painel do dia)
+    SchedulesScreen.kt aba Escalas (escala ativa, simulação, lista, histórico)
+    NotesScreen.kt    aba Notas e nota rápida
+    PersonalScreen.kt folha Novo evento e nota pessoal do dia
+    SearchSheet.kt    busca e próximos lembretes
+    Kit.kt            ícones de traço e componentes do conceito
     Sheets.kt         editar escala, mudança, nota, período, compartilhar, mês, mensagens
     SettingsSheet.kt  Temas / Dados / Idiomas / Sobre
     Render.kt         imagem "Compartilhar período" e "PDF do ano"
@@ -67,7 +95,9 @@ app/src/main/java/com/kalendrium/
   app/      só Android: MainActivity, ViewModel, arquivos (SAF), PDF (PdfDocument), FileProvider
 ```
 
-## Visualizações
+## Visualizações (até a 5.3)
+
+Na 6.0 a aba Calendário usa Mês / Semana / Agenda; o texto abaixo descreve a versão anterior.
 
 O botão de grade ao lado do seletor Pessoal | Work troca a visualização (vale para os dois modos e fica gravada):
 **Diária**, **Semanal**, **Mensal** (padrão), **Mensal + diária**, **Anual** e **Lista de eventos**.
@@ -121,7 +151,9 @@ Ajustes › **Idiomas** tem quatro opções: **Sistema** (padrão), **Português
   e os dados gravados são os mesmos em qualquer idioma.
 - Textos ficam no próprio código com `L("Hoje", "Today", "Hoy")` (`domain/I18n.kt`), assim a lógica continua testável fora do Android.
 
-## Modos Pessoal e Work
+## Modos Pessoal e Work (até a 5.3)
+
+Na 6.0 os dois modos aparecem juntos (eventos pessoais e escala na mesma agenda, com o filtro "Escala"); os arquivos continuam separados como abaixo.
 
 O seletor **Pessoal | Work** ao lado do nome troca o contexto na mesma tela (estado `CalendarMode.PERSONAL` / `CalendarMode.WORK`),
 mantendo o mês exibido. O cabeçalho, o card "Hoje", o calendário mensal, a navegação e os cards são os mesmos componentes;

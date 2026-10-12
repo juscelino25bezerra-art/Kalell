@@ -1,29 +1,30 @@
 package com.kalendrium.ui
 
-import com.kalendrium.domain.L
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TimePickerDefaults
@@ -38,21 +39,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kalendrium.domain.Agenda
+import com.kalendrium.domain.Category
 import com.kalendrium.domain.Dates
-import com.kalendrium.domain.I18n
-import com.kalendrium.domain.P
+import com.kalendrium.domain.Engine
 import com.kalendrium.domain.Event
 import com.kalendrium.domain.EventKind
+import com.kalendrium.domain.L
+import com.kalendrium.domain.P
 import com.kalendrium.domain.Personal
 import com.kalendrium.domain.PersonalData
+import com.kalendrium.domain.Repeat
 import com.kalendrium.ui.theme.Look
 import com.kalendrium.ui.theme.hexColor
 import com.kalendrium.ui.theme.mix
@@ -66,9 +70,6 @@ private fun kindName(k: EventKind, n: Int): String = when (k) {
     EventKind.APPOINTMENT -> P(n, "compromisso", "compromissos", "appointment", "appointments", "cita", "citas")
     EventKind.REMINDER -> P(n, "lembrete", "lembretes", "reminder", "reminders", "recordatorio", "recordatorios")
 }
-
-/** Cor sugerida para cada tipo de item (pode ser trocada na folha). */
-private val KIND_COLORS = mapOf(EventKind.EVENT to "#1a73e8", EventKind.APPOINTMENT to "#9334e6", EventKind.REMINDER to "#e8710a")
 
 // ---------------------------------------------------------------- resumo do dia (card superior)
 
@@ -91,193 +92,230 @@ fun personalSummary(p: PersonalData, today: LocalDate, now: LocalTime): String {
     }
 }
 
-// ---------------------------------------------------------------- calendário
-
-@Composable
-fun RowScope.PersonalLegend() {
-    val c = Look.colors
-    LegendItem(mix(c.primary, .35f, c.surface), L("Com eventos", "With events", "Con eventos"))
-    LegendItem(c.primary, L("Hoje", "Today", "Hoy"), round = true)
-    LegendItem(hexColor("#f9ab00"), L("Nota", "Note", "Nota"), round = true)
-}
-
-/** Dia do calendário pessoal: número, até dois eventos e a nota do dia. */
-@Composable
-fun PersonalDayCell(
-    d: LocalDate,
-    p: PersonalData,
-    isToday: Boolean,
-    isSelected: Boolean,
-    narrow: Boolean,
-    minH: Dp,
-    modifier: Modifier,
-    onDay: (String) -> Unit,
-) {
-    val look = Look.current
-    val c = look.colors
-    val s = Dates.iso(d)
-    val events = p.eventsOn(s)
-    val note = p.notes[s]
-    val shape = RoundedCornerShape(if (narrow) 14.dp else 16.dp)
-    val busy = events.isNotEmpty()
-    val bg = when {
-        look.glass && busy -> mix(c.primary, .16f, look.glassStrong)
-        look.glass -> look.glassStrong
-        busy -> mix(c.primary, if (c.dark) .24f else .14f, c.surface)
-        else -> look.page
-    }
-    val desc = Dates.dayMonth(d) +
-        (if (events.isEmpty()) L(", sem eventos", ", no events", ", sin eventos") else ", ${events.size} " + L("evento(s)", "event(s)", "evento(s)") + ": ${events.joinToString { it.title }}") +
-        (if (note != null) L(", com nota", ", with note", ", con nota") else "")
-    Box(
-        modifier.heightIn(min = minH)
-            .clip(shape).background(bg)
-            .then(if (look.glass) Modifier.border(1.dp, look.glassBorder, shape) else Modifier)
-            .then(if (isSelected) Modifier.border(2.5.dp, c.primary, shape) else Modifier)
-            .press { onDay(s) }
-            .semantics { contentDescription = desc },
-    ) {
-        Column(
-            Modifier.fillMaxWidth().padding(horizontal = if (narrow) 4.dp else 5.dp, vertical = if (narrow) 5.dp else 7.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Box(
-                Modifier.size(24.dp).clip(CircleShape).background(if (isToday) c.primary else androidx.compose.ui.graphics.Color.Transparent),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    "${d.dayOfMonth}", fontSize = if (narrow) 13.sp else 14.sp,
-                    fontWeight = if (isToday) FontWeight.Bold else FontWeight.SemiBold,
-                    color = if (isToday) c.onPrimary else c.onSurface,
-                )
-            }
-            Spacer(Modifier.size(2.dp))
-            events.take(2).forEach { DayChip(it.title, it.color) }
-            if (events.size > 2) Text("+${events.size - 2}", Modifier.padding(top = 1.dp), fontSize = 9.sp, fontWeight = FontWeight.Bold, color = c.onSurfaceVar)
-        }
-        if (note != null) Dot(hexColor(note.color), 7.dp, Modifier.align(Alignment.TopStart).offset(7.dp, 7.dp))
-    }
-}
-
-// ---------------------------------------------------------------- eventos do dia selecionado
-
-@Composable
-fun DayEventsCard(ctl: AppController) {
-    val c = Look.colors
-    val day = ctl.selected
-    val s = Dates.iso(day)
-    val events = ctl.personal.eventsOn(s)
-    val note = ctl.personal.notes[s]
-    val title = when (day) {
-        ctl.today -> L("Hoje", "Today", "Hoy")
-        ctl.today.plusDays(1) -> L("Amanhã", "Tomorrow", "Mañana")
-        else -> Dates.capitalize(Dates.weekdayDayMonth(day))
-    }
-    val text = when (events.size) {
-        0 -> (if (day == ctl.today) Dates.capitalize(Dates.weekdayDayMonth(day)) + L(" · nada marcado.", " · nothing scheduled.", " · nada programado.") else L("Nada marcado neste dia.", "Nothing scheduled on this day.", "Nada programado este día.")) +
-            L(" Toque de novo no dia selecionado para criar um evento.", " Tap the selected day again to create an event.", " Toque de nuevo el día seleccionado para crear un evento.")
-        1 -> L("1 item", "1 item", "1 elemento")
-        else -> "${events.size} " + L("itens", "items", "elementos")
-    }
-    SectionCard(title, text, L("Evento", "Event", "Evento"), { ctl.openEvent(s) }) {
-        events.forEachIndexed { i, e ->
-            Row(Modifier.fillMaxWidth().press { ctl.openEvent(s, e) }.padding(vertical = 12.dp, horizontal = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(10.dp, 36.dp).clip(RoundedCornerShape(50)).background(hexColor(e.color)))
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text(e.title, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = c.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text("${e.timeText} · ${e.kind.label}", fontSize = 12.sp, color = c.onSurfaceVar)
-                    if (e.description.isNotEmpty()) Text(e.description, fontSize = 12.sp, color = c.onSurfaceVar, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                }
-                if (e.remind >= 0) Icon(Icons.Outlined.Notifications, L("Com lembrete", "With reminder", "Con recordatorio"), tint = c.onSurfaceVar, modifier = Modifier.padding(start = 8.dp).size(18.dp))
-            }
-            if (i < events.lastIndex) HorizontalDivider(color = c.outlineVar)
-        }
-        if (note != null) {
-            Row(
-                Modifier.fillMaxWidth().padding(top = 12.dp).controlSurface(RoundedCornerShape(18.dp), Look.current.page)
-                    .press { ctl.openDayNote(s) }.padding(horizontal = 14.dp, vertical = 12.dp),
-            ) {
-                Box(Modifier.size(4.dp, 20.dp).clip(RoundedCornerShape(50)).background(hexColor(note.color)))
-                Spacer(Modifier.width(10.dp))
-                Text(note.text, fontSize = 14.sp, color = c.onSurface, lineHeight = 20.sp, maxLines = 6, overflow = TextOverflow.Ellipsis)
-            }
-        }
-        AppButton(
-            if (note != null) L("Editar nota", "Edit note", "Editar nota") else L("Adicionar nota", "Add note", "Añadir nota"), { ctl.openDayNote(s) },
-            Modifier.padding(top = 12.dp), kind = BtnKind.Text, icon = Icons.Outlined.Edit,
-            padding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 8.dp),
-        )
-    }
-}
-
-// ---------------------------------------------------------------- folha de evento
+// ---------------------------------------------------------------- folha de evento (redesign 6.0)
 
 /** "09:05" sempre com algarismos 0–9, qualquer que seja o idioma do aparelho. */
 private fun hm(h: Int, m: Int) = String.format(Locale.ROOT, "%02d:%02d", h, m)
 
+/** Soma minutos a "HH:mm" sem passar de 23:59 (o evento termina no mesmo dia). */
+private fun plusMinutes(t: String, min: Int): String {
+    val x = Personal.time(t) ?: return ""
+    val total = (x.hour * 60 + x.minute + min).coerceAtMost(23 * 60 + 59)
+    return hm(total / 60, total % 60)
+}
+
+/**
+ * Novo evento / editar evento: categoria (a cor segue), título, quando (Hoje, Amanhã, outra data), aviso de
+ * folga ou conflito com o turno, horário, repetição, lembrete e, recolhidos, local, descrição e cor.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun EventSheet(ctl: AppController, date0: String, e: Event?, start0: String? = null) {
+    val c = Look.colors
     val now = ctl.now()
-    // toque numa hora da visualização diária já sugere aquele horário
     val defStart = rememberSaveable { start0?.takeIf { Personal.isTime(it) } ?: hm(minOf(now.hour + 1, 23), 0) }
     val initial = remember {
         EventForm(
             title = e?.title ?: "", kind = e?.kind ?: EventKind.EVENT, date = e?.date ?: date0, allDay = e?.allDay ?: false,
             start = e?.start?.ifEmpty { null } ?: defStart,
             end = if (e != null) e.end else if (defStart < "23:00") hm(defStart.take(2).toInt() + 1, 0) else "23:59",
-            description = e?.description ?: "", color = e?.color ?: KIND_COLORS.getValue(EventKind.EVENT), remind = e?.remind ?: -1,
+            description = e?.description ?: "", color = e?.color ?: Category.PERSONAL.color, remind = e?.remind ?: -1,
+            category = e?.category ?: Category.PERSONAL, repeat = e?.repeat ?: Repeat.NONE, until = e?.until ?: "", location = e?.location ?: "",
         )
     }
     var title by rememberSaveable { mutableStateOf(initial.title) }
-    var kindKey by rememberSaveable { mutableStateOf(initial.kind.key) }
-    val kind = EventKind.of(kindKey)
+    var catKey by rememberSaveable { mutableStateOf(initial.category.key) }
+    val category = Category.of(catKey)
     var date by rememberSaveable { mutableStateOf(initial.date) }
     var allDay by rememberSaveable { mutableStateOf(initial.allDay) }
     var start by rememberSaveable { mutableStateOf(initial.start) }
     var end by rememberSaveable { mutableStateOf(initial.end) }
     var desc by rememberSaveable { mutableStateOf(initial.description) }
+    var location by rememberSaveable { mutableStateOf(initial.location) }
     var color by rememberSaveable { mutableStateOf(initial.color) }
     var remind by rememberSaveable { mutableIntStateOf(initial.remind) }
-    var picking by rememberSaveable { mutableStateOf(false) }
-    val form = EventForm(title, kind, date, allDay, start, end, desc, color, remind)
-    AppSheet(ctl::closeSheet, if (e != null) L("Editar", "Edit", "Editar") + " ${e.kind.label.lowercase(I18n.locale)}" else L("Novo evento", "New event", "Nuevo evento"), dirty = form != initial) {
-        Field(L("Título", "Title", "Título")) { AppTextField(title, { title = it }, placeholder = L("Ex.: Dentista, aniversário, reunião...", "E.g.: Dentist, birthday, meeting...", "Ej.: Dentista, cumpleaños, reunión..."), maxLength = 80) }
-        Field(L("Tipo", "Type", "Tipo")) {
-            SegTabs(EventKind.entries, kind, { it.label }, { k ->
-                if (color == KIND_COLORS[kind]) color = KIND_COLORS.getValue(k)
-                if (k == EventKind.REMINDER && remind < 0) remind = 0
-                kindKey = k.key
-            })
+    var repeatKey by rememberSaveable { mutableStateOf(initial.repeat.key) }
+    val repeat = Repeat.of(repeatKey)
+    var until by rememberSaveable { mutableStateOf(initial.until) }
+    var more by rememberSaveable { mutableStateOf(e != null && (e.location.isNotEmpty() || e.description.isNotEmpty() || e.color != e.category.color)) }
+    var pickDate by rememberSaveable { mutableStateOf(false) }
+    val form = EventForm(title, initial.kind, date, allDay, start, end, desc, color, remind, category, repeat, until, location)
+    val canSave = title.isNotBlank()
+    AppSheet(ctl::closeSheet, dirty = form != initial) {
+        // cabeçalho do conceito: fechar, título e Salvar (ativo só com título)
+        Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+            IconAction(KIcons.Close, L("Cancelar", "Cancel", "Cancelar"), ctl::closeSheet)
+            Text(
+                if (e != null) L("Editar evento", "Edit event", "Editar evento") else L("Novo evento", "New event", "Nuevo evento"),
+                Modifier.weight(1f).padding(start = 6.dp), fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = c.onSurface,
+            )
+            AppButton(L("Salvar", "Save", "Guardar"), { ctl.submitEvent(e, form) }, kind = BtnKind.Filled, enabled = canSave)
         }
-        Field(L("Data", "Date", "Fecha")) { DateField(date, { date = it }) }
-        CheckRow(allDay, { allDay = it }, L("Dia inteiro", "All day", "Todo el día"), L("Sem horário marcado. O lembrete, se houver, usa 9:00 como referência.", "No set time. The reminder, if any, uses 9:00 as reference.", "Sin hora fija. El recordatorio, si lo hay, usa las 9:00 como referencia."))
-        if (!allDay) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Field(L("Início", "Start", "Inicio"), Modifier.weight(1f)) { TimeField(start, { start = it }) }
-                Field(L("Fim (opcional)", "End (optional)", "Fin (opcional)"), Modifier.weight(1f)) { TimeField(end, { end = it }, clearable = true) }
+        // categoria
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Category.entries.forEach { k ->
+                val on = k == category
+                val shape = RoundedCornerShape(16.dp)
+                Column(
+                    Modifier.weight(1f).heightIn(min = 70.dp).clip(shape)
+                        .background(if (on) mix(k.tint, .18f, Look.current.card) else Look.current.card)
+                        .border(1.5.dp, if (on) k.tint else c.outlineVar, shape)
+                        .press(role = Role.RadioButton) {
+                            // a cor acompanha a categoria, a menos que tenha sido escolhida à mão
+                            if (color.equals(category.color, ignoreCase = true)) color = k.color
+                            catKey = k.key
+                        }
+                        .semantics { selected = on }
+                        .padding(vertical = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterVertically),
+                ) {
+                    Icon(k.icon, null, tint = if (on) k.tint else c.onSurfaceVar, modifier = Modifier.size(22.dp))
+                    Text(k.label, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = if (on) c.onSurface else c.onSurfaceVar, maxLines = 1)
+                }
             }
         }
+        Field(L("Título", "Title", "Título")) {
+            AppTextField(title, { title = it }, placeholder = L("Ex.: Academia, reunião, médico...", "E.g.: Gym, meeting, doctor...", "Ej.: Gimnasio, reunión, médico..."), maxLength = 80)
+        }
+        // quando
+        Text(L("Quando", "When", "Cuándo"), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = c.onSurfaceVar)
+        Spacer(Modifier.height(6.dp))
+        val today = ctl.today
+        val tomorrow = today.plusDays(1)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            DateChip(L("Hoje", "Today", "Hoy"), weekdayShort(today) + ", " + Dates.shortDayMonth(today), date == Dates.iso(today), Modifier.weight(1f)) { date = Dates.iso(today) }
+            DateChip(L("Amanhã", "Tomorrow", "Mañana"), weekdayShort(tomorrow) + ", " + Dates.shortDayMonth(tomorrow), date == Dates.iso(tomorrow), Modifier.weight(1f)) { date = Dates.iso(tomorrow) }
+            val other = date != Dates.iso(today) && date != Dates.iso(tomorrow) && Dates.isDate(date)
+            DateChip(
+                if (other) weekdayShort(Dates.parse(date)) + ", " + Dates.shortDayMonth(Dates.parse(date)) else L("Outra data", "Other date", "Otra fecha"),
+                if (other) "${Dates.parse(date).year}" else L("escolher", "choose", "elegir"), other, Modifier.weight(1f),
+            ) { pickDate = true }
+        }
+        if (pickDate) DatePickDialog(date, { date = it; pickDate = false }, { pickDate = false })
+        ShiftContext(ctl, date, allDay, start, end) { s, en -> start = s; end = en }
+        // dia todo
+        Row(Modifier.fillMaxWidth().heightIn(min = 52.dp).padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(L("Dia todo", "All day", "Todo el día"), Modifier.weight(1f), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = c.onSurface)
+            Switch(allDay, { allDay = it }, colors = SwitchDefaults.colors(checkedTrackColor = c.primary, checkedThumbColor = c.onPrimary))
+        }
+        if (!allDay) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Field(L("Início", "Start", "Inicio"), Modifier.weight(1f)) {
+                    TimeField(start, { v ->
+                        // mantém a duração ao mudar o início
+                        val dur = Personal.time(end)?.let { en -> Personal.time(start)?.let { st -> (en.toSecondOfDay() - st.toSecondOfDay()) / 60 } }
+                        start = v
+                        if (dur != null && dur > 0) end = plusMinutes(v, dur)
+                    })
+                }
+                Field(L("Término", "End", "Fin"), Modifier.weight(1f)) { TimeField(end, { end = it }, clearable = true) }
+            }
+        }
+        // repetir
+        Field(L("Repetir", "Repeat", "Repetir")) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Repeat.entries.forEach { r -> PillChip(r.label, r == repeat, { repeatKey = r.key }) }
+            }
+            if (repeat == Repeat.OFF_DAYS) Para(
+                if (ctl.ready) L("Repete nas folgas e nos períodos (férias, licenças) da escala ", "Repeats on days off and periods (vacations, leaves) of ", "Se repite en los días libres y períodos (vacaciones, permisos) del horario ") + "\"${ctl.current.name}\"."
+                else L("Crie uma escala para o app saber quais são as suas folgas.", "Create a schedule so the app knows your days off.", "Cree un horario para que la app sepa cuáles son sus días libres."),
+                Modifier.padding(top = 6.dp),
+            )
+            if (repeat != Repeat.NONE) {
+                Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(L("Até", "Until", "Hasta"), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = c.onSurfaceVar, modifier = Modifier.width(48.dp))
+                    if (until.isEmpty()) AppButton(L("Sem data final · definir", "No end date · set", "Sin fecha final · definir"), { until = date }, kind = BtnKind.Text)
+                    else {
+                        DateField(until, { until = it }, min = date, modifier = Modifier.weight(1f))
+                        IconAction(KIcons.Close, L("Sem data final", "No end date", "Sin fecha final"), { until = "" })
+                    }
+                }
+            }
+        }
+        // lembrete
         Field(L("Lembrete", "Reminder", "Recordatorio")) {
-            SelectBox(Personal.REMINDERS.firstOrNull { it.first == remind }?.second ?: L("Sem lembrete", "No reminder", "Sin recordatorio")) { picking = true }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Personal.REMINDERS.forEach { (m, label) -> PillChip(label, m == remind, { remind = m }) }
+            }
         }
         if (remind >= 0 && ctl.notifBlocked) NotificationsOff(ctl::enableNotifications)
-        Field(L("Cor", "Color", "Color")) { ColorPicker(color, { color = it }, L("Cor do evento", "Event color", "Color del evento")) }
-        Field(L("Descrição (opcional)", "Description (optional)", "Descripción (opcional)"), help = "${desc.length}/500 " + L("caracteres", "characters", "caracteres")) {
-            AppTextField(desc, { desc = it }, placeholder = L("Local, observações...", "Place, notes...", "Lugar, observaciones..."), maxLength = 500, minLines = 3)
+        // mais opções
+        Row(
+            Modifier.fillMaxWidth().padding(top = 8.dp).cardSurface(RoundedCornerShape(14.dp)).press { more = !more }.heightIn(min = 48.dp).padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(L("Local, descrição e cor", "Place, description and color", "Lugar, descripción y color"), Modifier.weight(1f), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = c.primary)
+            Text(if (more) L("Ocultar", "Hide", "Ocultar") else L("Opcional", "Optional", "Opcional"), fontSize = 13.sp, color = c.onSurfaceVar)
         }
-        SheetActions {
-            if (e != null) AppButton(L("Excluir", "Delete", "Eliminar"), { ctl.deleteEvent(e) }, kind = BtnKind.Danger)
-            Spacer(Modifier.weight(1f))
-            AppButton(L("Cancelar", "Cancel", "Cancelar"), ctl::closeSheet, kind = BtnKind.Text)
-            AppButton(L("Salvar", "Save", "Guardar"), {
-                ctl.submitEvent(e, form)
-            }, kind = BtnKind.Filled)
+        if (more) {
+            Field(L("Local", "Place", "Lugar")) { AppTextField(location, { location = it }, placeholder = L("Adicionar local", "Add place", "Añadir lugar"), maxLength = 80) }
+            Field(L("Descrição", "Description", "Descripción"), help = "${desc.length}/500 " + L("caracteres", "characters", "caracteres")) {
+                AppTextField(desc, { desc = it }, placeholder = L("Detalhes, links, o que levar…", "Details, links, what to bring…", "Detalles, enlaces, qué llevar…"), maxLength = 500, minLines = 3)
+            }
+            Field(L("Cor", "Color", "Color"), help = L("A cor segue a categoria; escolha outra se quiser.", "The color follows the category; pick another if you like.", "El color sigue la categoría; elija otro si quiere.")) {
+                ColorPicker(color, { color = it }, L("Cor do evento", "Event color", "Color del evento"))
+            }
+        }
+        if (e != null) {
+            if (e.recurring) Para(L("As alterações valem para todas as repetições.", "Changes apply to all repeats.", "Los cambios se aplican a todas las repeticiones."), Modifier.padding(top = 12.dp))
+            SheetActions {
+                AppButton(L("Excluir", "Delete", "Eliminar"), { ctl.deleteEvent(e) }, kind = BtnKind.Danger, icon = KIcons.Trash)
+                Spacer(Modifier.weight(1f))
+            }
         }
     }
-    if (picking) {
-        val idx = Personal.REMINDERS.indexOfFirst { it.first == remind }.coerceAtLeast(0)
-        OptionListDialog(L("Lembrete", "Reminder", "Recordatorio"), Personal.REMINDERS.map { it.second }, idx, onPick = { remind = Personal.REMINDERS[it].first; picking = false }, onDismiss = { picking = false })
+}
+
+@Composable
+private fun DateChip(label: String, sub: String, on: Boolean, modifier: Modifier, onClick: () -> Unit) {
+    val c = Look.colors
+    val shape = RoundedCornerShape(14.dp)
+    Column(
+        modifier.heightIn(min = 54.dp).clip(shape).background(if (on) mix(c.primary, .16f, Look.current.card) else Look.current.card)
+            .border(1.5.dp, if (on) c.primary else c.outlineVar, shape)
+            .press(role = Role.RadioButton, onClick = onClick).semantics { selected = on }.padding(vertical = 6.dp, horizontal = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(label, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = c.onSurface, maxLines = 1)
+        Text(sub, fontSize = 11.sp, color = c.onSurfaceVar, maxLines = 1)
+    }
+}
+
+/** Aviso do dia escolhido: folga, período, turno sem conflito ou conflito (com sugestão de horário depois do turno). */
+@Composable
+private fun ShiftContext(ctl: AppController, date: String, allDay: Boolean, start: String, end: String, onSuggest: (String, String) -> Unit) {
+    if (!ctl.ready || !Dates.isDate(date)) return
+    val c = Look.colors
+    val sch = ctl.current
+    val d = Dates.parse(date)
+    val period = Engine.periodOn(date, sch)
+    val conflict = if (!allDay) Agenda.conflict(date, start, end, sch) else null
+    val shift = Agenda.shiftText(sch)
+    val (tint, text) = when {
+        period != null -> c.offStrong to L("Você está em ", "You're on ", "Está en ") + "\"${period.title.ifEmpty { L("período", "period", "período") }}\"" + L(" neste dia.", " this day.", " este día.")
+        conflict != null -> c.workStrong to L("Conflita com seu turno ", "Overlaps your shift ", "Coincide con su turno ") + "(${conflict.start.toLocalTime()} – ${conflict.end.toLocalTime()})."
+        !Agenda.isWork(d, sch) -> c.offStrong to L("Você está de folga neste dia.", "You're off this day.", "Está libre este día.")
+        shift.isNotEmpty() -> hexColor("#3dd6a8") to L("Turno ", "Shift ", "Turno ") + shift + L(" neste dia. Sem conflito.", " this day. No overlap.", " este día. Sin conflicto.")
+        else -> c.workStrong to L("Dia de trabalho na escala ", "Work day on ", "Día de trabajo en el horario ") + "\"${sch.name}\"."
+    }
+    Row(
+        Modifier.fillMaxWidth().padding(top = 10.dp).clip(RoundedCornerShape(14.dp)).background(tint.copy(alpha = .14f)).padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(if (period != null || conflict == null && !Agenda.isWork(d, sch)) KIcons.Sun else KIcons.Briefcase, null, tint = tint, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(10.dp))
+        Text(text, Modifier.weight(1f), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = c.onSurface)
+        if (conflict != null && conflict.end.toLocalDate() == d) {
+            // sugere começar 30 min depois do fim do turno, mantendo a duração
+            val dur = Personal.time(end)?.let { en -> Personal.time(start)?.let { st -> ((en.toSecondOfDay() - st.toSecondOfDay()) / 60).takeIf { it > 0 } } } ?: 60
+            val t = conflict.end.toLocalTime().plusMinutes(30)
+            if (t.isAfter(conflict.end.toLocalTime())) {
+                val s = hm(t.hour, t.minute)
+                AppButton(L("Usar ", "Use ", "Usar ") + s, { onSuggest(s, plusMinutes(s, dur)) }, kind = BtnKind.Text, padding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 6.dp))
+            }
+        }
     }
 }
 

@@ -432,4 +432,100 @@ class AppControllerTest {
         assertEquals(before + 1, synced)
         c.setLanguage("pt")
     }
+
+    // ---------- redesign 6.0 ----------
+    @Test fun `usuario antigo na paleta padrao passa uma vez para a paleta nova`() {
+        val p = Fake(mapOf(Codec.KEY to Codec.encode(work().copy(palette = "material"))))
+        val c = ctl(p)
+        assertEquals("kalendrium", c.data.palette)
+        assertEquals(AppController.DESIGN_VERSION, p.store[AppController.DESIGN_KEY])
+        // voltou para Material à mão: a migração não roda de novo
+        c.setPalette("material")
+        assertEquals("material", ctl(p).data.palette)
+        // quem escolheu outra paleta continua nela
+        assertEquals("nord", ctl(Fake(mapOf(Codec.KEY to Codec.encode(work().copy(palette = "nord"))))).data.palette)
+    }
+
+    @Test fun `instalacao nova ja nasce na paleta nova sem gravar nada`() {
+        val p = Fake()
+        assertEquals("kalendrium", ctl(p).data.palette)
+        assertEquals(0, p.writes)
+    }
+
+    @Test fun `evento repetido nas folgas aparece nas folgas e agenda lembretes das ocorrencias`() {
+        val p = Fake(mapOf(Codec.KEY to Codec.encode(work())))
+        val c = ctl(p)
+        // 4×1 a partir de 01/10: folgas em 05, 10, 15…
+        assertTrue(c.submitEvent(null, form(title = "Corrida", start = "07:00", end = "08:00", remind = 0).copy(category = com.kalendrium.domain.Category.HEALTH, repeat = com.kalendrium.domain.Repeat.OFF_DAYS)))
+        assertEquals(1, c.eventsOn(LocalDate.of(2026, 10, 5)).size)
+        assertTrue(c.eventsOn(LocalDate.of(2026, 10, 6)).isEmpty())
+        assertEquals(com.kalendrium.domain.Category.HEALTH, Personal.load(p.store[Personal.KEY]).events.single().category)
+        // lembretes: data inicial (03/10) e as folgas seguintes, cada uma com id próprio
+        val ids = p.synced!!.map { it.id }
+        assertTrue(ids.any { it.endsWith("@2026-10-05") })
+        assertTrue(ids.any { it.endsWith("@2026-10-10") })
+        assertTrue(c.upcomingReminders(7).isNotEmpty())
+    }
+
+    @Test fun `repeticao ate antes da data e recusada`() {
+        val c = ctl(Fake())
+        assertFalse(c.submitEvent(null, form().copy(repeat = com.kalendrium.domain.Repeat.WEEKLY, until = "2026-10-01")))
+        assertTrue(c.lastMsg()!!.contains("repetição"))
+    }
+
+    @Test fun `horario do turno exige inicio e fim e e salvo na escala`() {
+        val p = Fake(mapOf(Codec.KEY to Codec.encode(work())))
+        val c = ctl(p)
+        val sc = c.current
+        val rows = sc.blocks.mapIndexed { i, b -> BlockRow("${b.w}", "${b.o}", b.name, i) }
+        kotlinx.coroutines.runBlocking {
+            assertFalse(c.submitCycle(CycleMode.Edit, sc, CycleForm(rows, sc.name, sc.color, sc.anchor, false, today, "07:00", "")))
+            c.answerAll(true)
+            assertTrue(c.submitCycle(CycleMode.Edit, sc, CycleForm(rows, sc.name, sc.color, sc.anchor, false, today, "07:00", "15:00")))
+        }
+        assertEquals("07:00", c.current.shiftStart)
+        assertEquals("15:00", Codec.load(p.store[Codec.KEY], today).data.main.shiftEnd)
+    }
+
+    @Test fun `simulacao aplica outro padrao a partir de amanha e preserva o passado`() {
+        val p = Fake(mapOf(Codec.KEY to Codec.encode(work())))
+        val c = ctl(p)
+        c.simulate(Block(4, 1))
+        assertNull(c.simulation) // é o padrão atual
+        c.simulate(Block(5, 2))
+        assertEquals(listOf(Block(5, 2)), c.simulated!!.blocks)
+        assertEquals(listOf(Block(4, 1)), c.current.blocks) // nada muda antes de aplicar
+        c.applySimulation()
+        c.answerAll(true)
+        assertNull(c.simulation)
+        assertEquals(listOf(Block(5, 2)), c.current.blocks)
+        assertEquals("2026-10-04", c.current.anchor)
+        assertEquals("2026-10-04", c.current.history.single().to)
+    }
+
+    @Test fun `nota rapida vai para o pessoal ou para a escala e acrescenta ao texto existente`() {
+        val p = Fake(mapOf(Codec.KEY to Codec.encode(work())))
+        val c = ctl(p)
+        c.submitQuickNote(today, "Levar documentos", toSchedule = false)
+        c.submitQuickNote(today, "Ligar para a escola", toSchedule = false)
+        assertEquals("Levar documentos\nLigar para a escola", c.personal.notes[today]!!.text)
+        c.submitQuickNote(today, "Plantão extra", toSchedule = true)
+        assertEquals("Plantão extra", c.current.notes[today]!!.text)
+        c.submitQuickNote(today, "  ", toSchedule = true)
+        assertTrue(c.lastMsg()!!.contains("Escreva"))
+    }
+
+    @Test fun `abas fecham a folha e o nome fica so no aparelho`() {
+        val p = Fake()
+        val c = ctl(p)
+        c.openSearch()
+        c.selectTab(Tab.SCHEDULES)
+        assertEquals(Tab.SCHEDULES, c.tab)
+        assertNull(c.sheet)
+        c.toggleFilter(FILTER_SHIFT)
+        assertTrue(FILTER_SHIFT in c.hidden)
+        c.setName("  Juscelino   Bezerra ")
+        assertEquals("Juscelino Bezerra", ctl(p).userName)
+        assertFalse(Codec.encodeBackup(c.data, c.personal).contains("Juscelino"))
+    }
 }

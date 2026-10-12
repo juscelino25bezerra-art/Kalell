@@ -56,6 +56,9 @@ data class Schedule(
     val history: List<Era> = emptyList(),
     val notes: Map<String, Note> = emptyMap(),
     val periods: List<Period> = emptyList(),
+    /** Horário do turno ("HH:mm"; vazio = sem horário). Chaves novas do Kalendrium: o PWA ignora. */
+    val shiftStart: String = "",
+    val shiftEnd: String = "",
 ) : Cfg {
     val isMain: Boolean get() = id.isEmpty()
 }
@@ -80,10 +83,19 @@ data class AppData(
     fun replace(s: Schedule): AppData = copy(schedules = schedules.map { if (it.id == s.id) s else it })
 
     companion object {
+        /** Paletas que o PWA (e versões antigas do app) conhecem: vão na chave "palette". */
         val PALETTES = listOf(
             "material", "gruvbox", "nord", "dracula", "catppuccin",
             "tokyonight", "solarized", "everforest", "onedark", "rosepine",
         )
+        /**
+         * Paletas só do Kalendrium. Vão na chave nova "paletteX" e "palette" recebe "material",
+         * para um backup novo continuar importando no PWA e nas versões anteriores.
+         */
+        val EXTRA_PALETTES = listOf("kalendrium")
+        val ALL_PALETTES = EXTRA_PALETTES + PALETTES
+        /** Paleta do redesign 6.0: padrão das instalações novas. */
+        const val DEFAULT_PALETTE = "kalendrium"
         val THEMES = listOf("system", "light", "dark")
         val STYLES = listOf("material", "glass")
         const val MAX_SCHEDULES = 20
@@ -95,7 +107,7 @@ data class AppData(
         fun default(today: String) = AppData(
             initialized = false,
             theme = "system",
-            palette = "material",
+            palette = DEFAULT_PALETTE,
             uiStyle = "material",
             schedules = listOf(
                 Schedule(

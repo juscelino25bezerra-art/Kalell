@@ -10,6 +10,11 @@ object Palettes {
     }
 
     val all: Map<String, Pair<AppColors, AppColors>> = mapOf(
+        // redesign 6.0: azul-noite do conceito, turno em coral e folga em lilás
+        "kalendrium" to Pair(
+            c(false, 0xFF3A66DB, 0xFFFFFFFF, 0xFFDCE5FF, 0xFF1C2F6B, 0xFFE6EAF5, 0xFFFFFFFF, 0xFFEEF1F8, 0xFFE3E8F3, 0xFF151A2C, 0xFF566078, 0xFF8A93A8, 0xFFD5DAE6, 0xFFFFE1DC, 0xFFC2453A, 0xFFECE5FF, 0xFF6A4FD0),
+            c(true, 0xFF4C7BF0, 0xFFFFFFFF, 0xFF2B3A6E, 0xFFDCE5FF, 0xFF1E2540, 0xFF0E1220, 0xFF171C2E, 0xFF1E2438, 0xFFEEF1F8, 0xFFA3ACC2, 0xFF5A6684, 0xFF262E46, 0xFF4A2A2E, 0xFFFF8A7A, 0xFF2F2A5A, 0xFFB49CFF),
+        ),
         "material" to Pair(
             c(false, 0xFF65558F, 0xFFFFFFFF, 0xFFE9DDFF, 0xFF4D3D75, 0xFFE8DEF8, 0xFFFDF8FF, 0xFFF3EDF7, 0xFFECE6F0, 0xFF1D1B20, 0xFF49454F, 0xFF79747E, 0xFFCAC4D0, 0xFFD7F0DF, 0xFF236B3B, 0xFFF4E1E1, 0xFF8B3D42),
             c(true, 0xFFCFBDFE, 0xFF36275D, 0xFF4D3D75, 0xFFE9DDFF, 0xFF4A4458, 0xFF141218, 0xFF211F26, 0xFF2B2930, 0xFFE6E0E9, 0xFFCAC4D0, 0xFF938F99, 0xFF49454F, 0xFF173C25, 0xFFA8D9B5, 0xFF482729, 0xFFF1B6B9),
@@ -53,7 +58,7 @@ object Palettes {
     )
 
     /** Cor do círculo de prévia de cada paleta na tela de temas. */
-    val preview: Map<String, Color> = mapOf("material" to Color(0xFF6750A4), "gruvbox" to Color(0xFFD79921), "nord" to Color(0xFF5E81AC), "dracula" to Color(0xFFBD93F9), "catppuccin" to Color(0xFFCBA6F7), "tokyonight" to Color(0xFF7AA2F7), "solarized" to Color(0xFF2AA198), "everforest" to Color(0xFFA7C080), "onedark" to Color(0xFF61AFEF), "rosepine" to Color(0xFFC4A7E7))
+    val preview: Map<String, Color> = mapOf("kalendrium" to Color(0xFF3A66DB), "material" to Color(0xFF6750A4), "gruvbox" to Color(0xFFD79921), "nord" to Color(0xFF5E81AC), "dracula" to Color(0xFFBD93F9), "catppuccin" to Color(0xFFCBA6F7), "tokyonight" to Color(0xFF7AA2F7), "solarized" to Color(0xFF2AA198), "everforest" to Color(0xFFA7C080), "onedark" to Color(0xFF61AFEF), "rosepine" to Color(0xFFC4A7E7))
 
-    val names: Map<String, String> = mapOf("material" to "Material", "gruvbox" to "Gruvbox", "nord" to "Nord", "dracula" to "Dracula", "catppuccin" to "Catppuccin", "tokyonight" to "Tokyo Night", "solarized" to "Solarized", "everforest" to "Everforest", "onedark" to "One Dark", "rosepine" to "Rosé Pine")
+    val names: Map<String, String> = mapOf("kalendrium" to "Kalendrium", "material" to "Material", "gruvbox" to "Gruvbox", "nord" to "Nord", "dracula" to "Dracula", "catppuccin" to "Catppuccin", "tokyonight" to "Tokyo Night", "solarized" to "Solarized", "everforest" to "Everforest", "onedark" to "One Dark", "rosepine" to "Rosé Pine")
 }
