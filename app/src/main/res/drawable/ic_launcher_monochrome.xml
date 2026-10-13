@@ -1,34 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Ícone monocromático (ícones temáticos do Android 13+): o mesmo desenho do ícone em uma cor, em traços.
-     Coordenadas na grade de 108 unidades do ícone adaptativo, as mesmas do gerador. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- cartão -->
-    <path
+    <path android:pathData="M33,46a7,7 0 1,0 14,0a7,7 0 1,0 -14,0z"
+        android:fillColor="#FFFFFFFF" />
+    <path android:pathData="M50,46h3 M27,46h3 M40,36v-3 M40,56v3 M47.07,38.93l2.12,-2.12 M32.93,53.07l-2.12,2.12 M47.07,53.07l2.12,2.12 M32.93,38.93l-2.12,-2.12"
         android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="4"
-        android:pathData="M40,34H68A8,8 0,0 1,76 42V70A8,8 0,0 1,68 78H40A8,8 0,0 1,32 70V42A8,8 0,0 1,40 34Z" />
-    <!-- cabeçalho -->
-    <path
+        android:strokeWidth="2.6"
+        android:strokeLineCap="round" />
+    <path android:pathData="M64.92,36.06A10,10 0 1,0 75.46,49.23A8.5,8.5 0 0,1 64.92,36.06z"
+        android:fillColor="#FFFFFFFF" />
+    <path android:pathData="M35,62h38a5,5 0 0,1 5,5v4a5,5 0 0,1 -5,5h-38a5,5 0 0,1 -5,-5v-4a5,5 0 0,1 5,-5zM33.5,69a2.5,2.5 0 1,0 5.0,0a2.5,2.5 0 1,0 -5.0,0zM42.5,69a2.5,2.5 0 1,0 5.0,0a2.5,2.5 0 1,0 -5.0,0zM69.5,69a2.5,2.5 0 1,0 5.0,0a2.5,2.5 0 1,0 -5.0,0z"
         android:fillColor="#FFFFFFFF"
-        android:pathData="M40,34H68A8,8 0,0 1,76 42V45H32V42A8,8 0,0 1,40 34Z" />
-    <!-- argolas -->
-    <path
-        android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="5"
-        android:strokeLineCap="round"
-        android:pathData="M43,27.5V36.5M65,27.5V36.5" />
-    <!-- K -->
-    <path
-        android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="6"
-        android:strokeLineCap="round"
-        android:pathData="M42.5,52.5V71.5M44,63L55,54.5M47.5,60.5L59.5,71.5" />
-    <!-- ponto de hoje -->
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M59.3,52.5a4.2,4.2 0,1 0,8.4 0a4.2,4.2 0,1 0,-8.4 0Z" />
+        android:fillType="evenOdd" />
 </vector>

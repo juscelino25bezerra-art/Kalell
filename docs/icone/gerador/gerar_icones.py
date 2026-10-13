@@ -1,96 +1,104 @@
-# Gera os ícones do app a partir do ícone de referência (docs/icone/kalendrium-icone-original.png, 192×192).
-# A referência é pequena e sem suavização; para ficar nítida em todos os tamanhos, o desenho foi medido nela
-# (grade de 192 unidades) e é redesenhado aqui com a mesma geometria e a mesma cor.
+# Gera o ícone "Dia e noite" do Kalendrium: sol e lua sobre uma faixa de semana (escala 2×2), estilo Material flat.
+# Todas as coordenadas estão na grade de 108 unidades do ícone adaptativo; o desenho cabe na zona segura de 66 dp,
+# então nenhuma máscara (círculo, squircle, quadrado) corta nada.
 #
-# Uso: python3 docs/icone/gerador/gerar_icones.py <app/src/main> <docs/icone>   (precisa de Pillow)
-import sys
-from PIL import Image, ImageDraw
+# Uso: python3 docs/icone/gerador/gerar_icones.py <app/src/main> <docs/icone>   (precisa de cairosvg)
+import os, sys
+import cairosvg
 
-AZUL = (0x8E, 0xB4, 0xD9, 255)   # cor do calendário na referência
-BRANCO = (255, 255, 255, 255)    # fundo do ícone adaptativo e detalhes (faixa e pontos)
-SS = 8                           # supersample
+MAIN, DOCS = sys.argv[1], sys.argv[2]
+BG = "#1E3A8A"   # azul profundo (fundo)
+ACC = "#F5A524"  # âmbar (sol e dias de trabalho)
+W = "#FFFFFF"
+
+def circ(cx, cy, r):
+    return f"M{cx-r},{cy}a{r},{r} 0 1,0 {2*r},0a{r},{r} 0 1,0 {-2*r},0z"
+
+SUN = circ(40, 46, 7)
+RAYS = ("M50,46h3 M27,46h3 M40,36v-3 M40,56v3 "
+        "M47.07,38.93l2.12,-2.12 M32.93,53.07l-2.12,2.12 "
+        "M47.07,53.07l2.12,2.12 M32.93,38.93l-2.12,-2.12")
+MOON = "M64.92,36.06A10,10 0 1,0 75.46,49.23A8.5,8.5 0 0,1 64.92,36.06z"
+STRIP = "M35,62h38a5,5 0 0,1 5,5v4a5,5 0 0,1 -5,5h-38a5,5 0 0,1 -5,-5v-4a5,5 0 0,1 5,-5z"
+WORK = [36, 45, 72]  # pontos âmbar: trabalho
+OFF = [54, 63]       # pontos azuis: folga
+
+# ---------- SVG (for PNG rendering) ----------
+def svg_fg():
+    s = [f'<path d="{SUN}" fill="{ACC}"/>',
+         f'<path d="{RAYS}" stroke="{ACC}" stroke-width="2.6" stroke-linecap="round" fill="none"/>',
+         f'<path d="{MOON}" fill="{W}"/>',
+         f'<path d="{STRIP}" fill="{W}"/>']
+    s += [f'<path d="{circ(x,69,2.5)}" fill="{ACC}"/>' for x in WORK]
+    s += [f'<path d="{circ(x,69,2.5)}" fill="{BG}"/>' for x in OFF]
+    return "".join(s)
+
+def svg(viewbox, shape):
+    x, y, w, h = viewbox
+    if shape == "square":
+        clip = f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{w*0.22}"/>'
+    elif shape == "round":
+        clip = f'<circle cx="{x+w/2}" cy="{y+h/2}" r="{w/2}"/>'
+    else:
+        clip = f'<rect x="{x}" y="{y}" width="{w}" height="{h}"/>'
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{x} {y} {w} {h}">'
+            f'<defs><clipPath id="c">{clip}</clipPath></defs><g clip-path="url(#c)">'
+            f'<rect x="0" y="0" width="108" height="108" fill="{BG}"/>{svg_fg()}</g></svg>')
+
+# ---------- Android vector XML ----------
+NS = 'xmlns:android="http://schemas.android.com/apk/res/android"'
+HEAD = (f'<vector {NS}\n    android:width="108dp"\n    android:height="108dp"\n'
+        '    android:viewportWidth="108"\n    android:viewportHeight="108">\n')
+
+def p(d, fill=None, stroke=None, extra=""):
+    a = f'    <path android:pathData="{d}"'
+    if fill: a += f'\n        android:fillColor="{fill}"'
+    if stroke:
+        a += (f'\n        android:strokeColor="{stroke}"\n        android:strokeWidth="2.6"'
+              '\n        android:strokeLineCap="round"')
+    return a + extra + " />\n"
+
+def fg_xml():
+    x = HEAD + p(SUN, ACC) + p(RAYS, stroke=ACC) + p(MOON, W) + p(STRIP, W)
+    x += "".join(p(circ(c, 69, 2.5), ACC) for c in WORK)
+    x += "".join(p(circ(c, 69, 2.5), BG) for c in OFF)
+    return x + "</vector>\n"
+
+def mono_xml():
+    holes = "".join(circ(c, 69, 2.5) for c in WORK)
+    x = HEAD + p(SUN, "#FFFFFFFF") + p(RAYS, stroke="#FFFFFFFF") + p(MOON, "#FFFFFFFF")
+    x += p(STRIP + holes, "#FFFFFFFF", extra='\n        android:fillType="evenOdd"')
+    return x + "</vector>\n"
+
+ADAPTIVE = ('<?xml version="1.0" encoding="utf-8"?>\n'
+            '<!-- Ícone (docs/icone/gerador/gerar_icones.py): sol e lua sobre faixa de semana, fundo azul profundo. -->\n'
+            f'<adaptive-icon {NS}>\n'
+            '    <background android:drawable="@color/ic_launcher_background" />\n'
+            '    <foreground android:drawable="@drawable/ic_launcher_foreground" />\n'
+            '    <monochrome android:drawable="@drawable/ic_launcher_monochrome" />\n'
+            '</adaptive-icon>\n')
+
+def write(path, text):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f: f.write(text)
+
+def png(path, svgtext, size):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    cairosvg.svg2png(bytestring=svgtext.encode(), write_to=path, output_width=size, output_height=size)
 
 
-def mascara(n, escala, ox, oy, furos=True):
-    """Calendário em unidades da referência (0..192) desenhado num canvas n×n (px), já suavizado."""
-    N = n * SS
-    m = Image.new('L', (N, N), 0)
-    d = ImageDraw.Draw(m)
-    k = escala * SS
-    X = lambda u: ox * SS + u * k
-    Y = lambda u: oy * SS + u * k
-    # corpo: retângulo arredondado (0,16)-(192,192), raio 40
-    d.rounded_rectangle((X(0), Y(16), X(192), Y(192)), radius=40 * k, fill=255)
-    # argolas: largura 16, topo semicircular (raio 8)
-    for cx in (56, 136):
-        d.ellipse((X(cx - 8), Y(0), X(cx + 8), Y(16)), fill=255)
-        d.rectangle((X(cx - 8), Y(8), X(cx + 8), Y(20)), fill=255)
-    if furos:
-        # faixa vazada entre o cabeçalho e o corpo (y 64..80)
-        d.rectangle((X(-1), Y(64), X(193), Y(80)), fill=0)
-        # três pontos: raio 12, centros em x 56/96/136, y 128
-        for cx in (56, 96, 136):
-            d.ellipse((X(cx - 12), Y(116), X(cx + 12), Y(140)), fill=0)
-    return m.resize((n, n), Image.LANCZOS)
+res = os.path.join(MAIN, "res")
+write(f"{res}/drawable/ic_launcher_foreground.xml", '<?xml version="1.0" encoding="utf-8"?>\n' + fg_xml())
+write(f"{res}/drawable/ic_launcher_monochrome.xml", '<?xml version="1.0" encoding="utf-8"?>\n' + mono_xml())
+write(f"{res}/mipmap-anydpi-v26/ic_launcher.xml", ADAPTIVE)
+write(f"{res}/mipmap-anydpi-v26/ic_launcher_round.xml", ADAPTIVE)
 
+LEG = (18, 18, 72, 72)  # Android 7: os ícones legados mostram os 72 dp centrais
+for d, s in {"mdpi": 48, "hdpi": 72, "xhdpi": 96, "xxhdpi": 144, "xxxhdpi": 192}.items():
+    png(f"{res}/mipmap-{d}/ic_launcher.png", svg(LEG, "square"), s)
+    png(f"{res}/mipmap-{d}/ic_launcher_round.png", svg(LEG, "round"), s)
 
-def calendario(n, escala, ox, oy, fundo_furos=None):
-    """RGBA: calendário azul; furos transparentes ou preenchidos com `fundo_furos`."""
-    img = Image.new('RGBA', (n, n), (0, 0, 0, 0))
-    if fundo_furos:
-        img.paste(Image.new('RGBA', (n, n), fundo_furos), (0, 0), mascara(n, escala, ox, oy, furos=False))
-    img.paste(Image.new('RGBA', (n, n), AZUL), (0, 0), mascara(n, escala, ox, oy))
-    return img
-
-
-# Ícone adaptativo (canvas 108 dp): o calendário ocupa 54 dp de largura, centralizado; o ponto mais distante do
-# centro fica a ~30,6 dp, dentro da zona segura (círculo de 66 dp), então nenhuma máscara corta o desenho.
-ADAPT_W = 54.0
-
-
-def adaptativo(n, fundo=None):
-    e = n / 108.0 * ADAPT_W / 192.0
-    o = (n - 192 * e) / 2
-    img = Image.new('RGBA', (n, n), fundo or (0, 0, 0, 0))
-    cal = calendario(n, e, o, o)
-    img.alpha_composite(cal)
-    return img
-
-
-def legado_quadrado(n):
-    # o próprio desenho da referência, com 2 dp de margem (44 de 48 dp), faixa e pontos em branco
-    e = n * 44 / 48 / 192.0
-    o = (n - 192 * e) / 2
-    return calendario(n, e, o, o, fundo_furos=BRANCO)
-
-
-def legado_redondo(n):
-    # círculo branco (44 de 48 dp) com o calendário dentro
-    N = n * SS
-    m = Image.new('L', (N, N), 0)
-    r = N * 22 / 48
-    ImageDraw.Draw(m).ellipse((N / 2 - r, N / 2 - r, N / 2 + r, N / 2 + r), fill=255)
-    img = Image.new('RGBA', (n, n), (0, 0, 0, 0))
-    img.paste(Image.new('RGBA', (n, n), BRANCO), (0, 0), m.resize((n, n), Image.LANCZOS))
-    e = n * 18.5 / 48 / 108.8      # ponto mais distante do centro do desenho = 108,8 unidades
-    o = (n - 192 * e) / 2
-    img.alpha_composite(calendario(n, e, o, o))
-    return img
-
-
-if __name__ == '__main__':
-    main, docs = sys.argv[1], sys.argv[2]
-    res = f'{main}/res'
-    for k, s in {'mdpi': 1, 'hdpi': 1.5, 'xhdpi': 2, 'xxhdpi': 3, 'xxxhdpi': 4}.items():
-        d = f'{res}/mipmap-{k}'
-        legado_quadrado(int(48 * s)).save(f'{d}/ic_launcher.png', optimize=True)
-        legado_redondo(int(48 * s)).save(f'{d}/ic_launcher_round.png', optimize=True)
-        adaptativo(int(108 * s)).save(f'{d}/ic_launcher_foreground.png', optimize=True)
-    # Play Store (512×512, quadrado cheio; a loja aplica os cantos): os 72 dp visíveis do ícone adaptativo
-    big = adaptativo(2048 * 108 // 72, BRANCO)
-    o = (big.width - 2048) // 2
-    play = big.crop((o, o, o + 2048, o + 2048)).convert('RGB').resize((512, 512), Image.LANCZOS)
-    play.save(f'{main}/ic_launcher-playstore.png', optimize=True)
-    play.save(f'{docs}/ic_launcher-playstore.png', optimize=True)
-    # versão grande do desenho (fundo transparente, faixa e pontos em branco)
-    calendario(1024, 1024 / 192, 0, 0, fundo_furos=BRANCO).save(f'{docs}/kalendrium-icone-1024.png', optimize=True)
+png(os.path.join(MAIN, "ic_launcher-playstore.png"), svg((0, 0, 108, 108), "full"), 512)
+png(os.path.join(DOCS, "ic_launcher-playstore.png"), svg((0, 0, 108, 108), "full"), 512)
+png(os.path.join(DOCS, "previa-icone-dia-noite.png"), svg(LEG, "round"), 512)
+# a cor de fundo (ic_launcher_background) fica em res/values/colors.xml
