@@ -1,0 +1,8 @@
+clean: OK
+testDebugUnitTest: OK
+   TEST-com.kalendrium.domain.LicenseAssetsTest.xml 3 testes, 0 falhas
+testes: 108, falhas: 0, erros: 0, pulados: 0
+assembleDebug: OK
+assembleRelease: OK
+sbom: OK
+check_licenses: OK
