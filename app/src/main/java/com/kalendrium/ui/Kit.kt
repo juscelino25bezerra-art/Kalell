@@ -192,7 +192,7 @@ fun ActionRow(icon: ImageVector, tint: Color, title: String, subtitle: String?, 
 fun AgendaRow(color: Color, time: String, title: String, sub: String, onClick: (() -> Unit)?, modifier: Modifier = Modifier, icon: ImageVector? = null) {
     val c = Look.colors
     Row(
-        modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Look.current.page.copy(alpha = if (Look.current.glass) .35f else 1f))
+        modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Look.current.page)
             .then(if (onClick != null) Modifier.press(onClick = onClick) else Modifier)
             .heightIn(min = 52.dp).padding(horizontal = 12.dp, vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically,

@@ -1,5 +1,7 @@
 package com.kalendrium.ui
 
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.LocalUriHandler
 import com.kalendrium.domain.L
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -104,22 +106,6 @@ private fun ThemesTab(ctl: AppController) {
             }
         }
     }
-    SectionLabel(L("Estilo", "Style", "Estilo"))
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        listOf("material" to ("Material 3" to L("Sólido e clássico", "Solid and classic", "Sólido y clásico")), "glass" to ("Liquid Glass" to L("Vidro, reflexos e transparência", "Glass, reflections and transparency", "Vidrio, reflejos y transparencia"))).forEach { (key, txt) ->
-            val on = d.uiStyle == key
-            Choice(on, { ctl.setStyle(key) }, Modifier.weight(1f)) {
-                Row(Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                    StylePreview(key == "glass")
-                    Spacer(Modifier.width(10.dp))
-                    Column {
-                        Text(txt.first, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = if (on) c.onPrimaryContainer else c.onSurface)
-                        Text(txt.second, fontSize = 9.sp, color = c.onSurfaceVar, lineHeight = 11.sp)
-                    }
-                }
-            }
-        }
-    }
     SectionLabel(L("Paleta", "Palette", "Paleta"))
     if (LocalDynamicColors.current != null) {
         CheckRow(d.dynamicColor, ctl::setDynamicColor, L("Cores do papel de parede", "Wallpaper colors", "Colores del fondo de pantalla"), L("Usa as cores do sistema (Android 12+) no lugar da paleta escolhida abaixo.", "Uses the system colors (Android 12+) instead of the palette chosen below.", "Usa los colores del sistema (Android 12+) en lugar de la paleta elegida abajo."))
@@ -152,24 +138,6 @@ private fun PalettePreview(color: Color) {
             clipPath(shifted, ClipOp.Difference) { drawRect(Color.Black.copy(alpha = .2f)) }
         }
         drawCircle(Color.White.copy(alpha = .33f), r - 2.dp.toPx(), style = Stroke(4.dp.toPx()))
-    }
-}
-
-@Composable
-private fun StylePreview(glass: Boolean) {
-    val look = Look.current
-    val c = look.colors
-    val shape = RoundedCornerShape(13.dp)
-    if (!glass) {
-        Box(Modifier.size(38.dp).clip(shape).background(c.primaryContainer).border(1.dp, c.outlineVar, shape))
-    } else {
-        Box(
-            Modifier.size(38.dp).clip(shape)
-                .background(Brush.linearGradient(listOf(c.primary.copy(alpha = .42f), c.surface.copy(alpha = .28f))))
-                .border(1.dp, Color.White.copy(alpha = .55f), shape),
-        ) {
-            Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color.White.copy(alpha = .5f), Color.Transparent), end = Offset(40f, 40f))))
-        }
     }
 }
 
@@ -224,6 +192,46 @@ private fun AboutTab() {
         Lang.ES -> ABOUT_ES
     }.forEach { Para(it, Modifier.padding(bottom = 12.dp), size = 15.sp) }
     Text(L("Desenvolvido por: Juscelino Be.\nFeita para privacidade ❤️", "Developed by: Juscelino Be.\nMade for privacy ❤️", "Desarrollado por: Juscelino Be.\nHecha para la privacidad ❤️"), fontWeight = FontWeight.Bold, color = c.onSurface, fontSize = 15.sp, lineHeight = 24.sp, modifier = Modifier.padding(top = 6.dp))
+    CreditsSection()
+}
+
+/** Ajustes › Sobre: tudo de terceiros que compõe o Kalendrium, com licença e link (lista em Credits.kt). */
+@Composable
+private fun CreditsSection() {
+    val c = Look.colors
+    val uri = LocalUriHandler.current
+    Text(L("Projetos usados no Kalendrium", "Projects used in Kalendrium", "Proyectos usados en Kalendrium"), fontSize = 19.sp, fontWeight = FontWeight.Bold, color = c.onSurface, modifier = Modifier.padding(top = 26.dp, bottom = 4.dp))
+    Para(L(
+        "O Kalendrium é feito sobre projetos de código aberto. Toque em um item para abrir o repositório no navegador; o app em si continua sem acesso à internet.",
+        "Kalendrium is built on open source projects. Tap an item to open its repository in the browser; the app itself still has no internet access.",
+        "Kalendrium está hecho sobre proyectos de código abierto. Toque un elemento para abrir el repositorio en el navegador; la app en sí sigue sin acceso a internet.",
+    ), Modifier.padding(bottom = 4.dp))
+    Credits.groups.forEach { g ->
+        SectionLabel(g.title)
+        if (g.note != null) Para(g.note, Modifier.padding(bottom = 6.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            g.items.forEach { item ->
+                Column(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(c.surface)
+                        // sem navegador instalado, o link só não abre (o endereço continua visível)
+                        .press(role = Role.Button) { runCatching { uri.openUri(item.url) } }
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(item.name, Modifier.weight(1f), fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, color = c.onSurface)
+                        Text(item.license, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = c.primary)
+                    }
+                    Text(item.use, fontSize = 12.sp, color = c.onSurfaceVar, lineHeight = 16.sp)
+                    Text(item.url.removePrefix("https://"), fontSize = 11.sp, color = c.primary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+        }
+    }
+    Para(L(
+        "Licenças completas: no repositório de cada projeto. A da fonte Manrope também está em docs/MANROPE-OFL.txt no código do Kalendrium, e esta lista em docs/CREDITOS.md.",
+        "Full licenses: in each project's repository. The Manrope font license is also in docs/MANROPE-OFL.txt in Kalendrium's source, and this list in docs/CREDITOS.md.",
+        "Licencias completas: en el repositorio de cada proyecto. La de la fuente Manrope también está en docs/MANROPE-OFL.txt en el código de Kalendrium, y esta lista en docs/CREDITOS.md.",
+    ), Modifier.padding(top = 12.dp))
 }
 
 private val ABOUT_PT = listOf(

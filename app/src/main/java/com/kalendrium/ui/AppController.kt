@@ -654,7 +654,6 @@ class AppController(
         // escolha feita à mão: a migração da 6.0 não troca mais a paleta
         store.persist(DESIGN_KEY) { DESIGN_VERSION }
     }
-    fun setStyle(s: String) { save(data.copy(uiStyle = s)) }
     fun setDynamicColor(on: Boolean) { save(data.copy(dynamicColor = on)) }
     fun setHideRecents(on: Boolean) { save(data.copy(hideRecents = on)) }
 

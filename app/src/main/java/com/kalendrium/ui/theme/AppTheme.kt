@@ -42,20 +42,13 @@ data class AppColors(
     val offStrong: Color,
 )
 
-/** Estilo visual escolhido + cor da escala ativa (--sc). */
+/** Cores do tema + cor da escala ativa (--sc). */
 @Immutable
-data class AppLook(val colors: AppColors, val glass: Boolean, val sc: Color) {
+data class AppLook(val colors: AppColors, val sc: Color) {
     // Fundo da tela e dos cartões. No claro, a tela fica levemente tingida e os cartões claros por cima;
     // no escuro, a tela fica mais escura e os cartões um tom acima (como no Material 3).
     val page get() = if (colors.dark) colors.surface else colors.surfaceContainer
     val card get() = if (colors.dark) colors.surfaceContainer else colors.surface
-
-    // Liquid Glass: vidro fosco clareado (claro) ou levemente iluminado (escuro), borda clara e brilho no topo
-    private val glassBase get() = if (colors.dark) mix(Color.White, .06f, colors.surfaceContainer) else mix(Color.White, .55f, colors.surfaceContainer)
-    val glassColor get() = glassBase.copy(alpha = if (colors.dark) .58f else .56f)
-    val glassStrong get() = glassBase.copy(alpha = if (colors.dark) .72f else .70f)
-    val glassBorder get() = if (colors.dark) Color.White.copy(alpha = .14f) else Color.White.copy(alpha = .78f)
-    val glassHighlight get() = Color.White.copy(alpha = if (colors.dark) .10f else .55f)
 }
 
 /** Manrope (SIL OFL, docs/MANROPE-OFL.txt): fonte do redesign, embutida no APK para funcionar sem internet. */
@@ -147,9 +140,9 @@ fun resolveColors(palette: String, mode: String, systemDark: Boolean, dynamic: P
 }
 
 @Composable
-fun AppTheme(palette: String, mode: String, style: String, scheduleColor: String, dynamic: Boolean = false, content: @Composable () -> Unit) {
+fun AppTheme(palette: String, mode: String, scheduleColor: String, dynamic: Boolean = false, content: @Composable () -> Unit) {
     val c = resolveColors(palette, mode, isSystemInDarkTheme(), if (dynamic) LocalDynamicColors.current else null)
-    val look = AppLook(c, style == "glass", hexColor(scheduleColor))
+    val look = AppLook(c, hexColor(scheduleColor))
     val base = if (c.dark) darkColorScheme() else lightColorScheme()
     val scheme = base.copy(
         primary = c.primary, onPrimary = c.onPrimary,
