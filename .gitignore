@@ -9,3 +9,6 @@ local.properties
 keystore.properties
 *.jks
 *.keystore
+# Python (ferramentas de auditoria)
+__pycache__/
+*.pyc

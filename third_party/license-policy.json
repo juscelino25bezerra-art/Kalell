@@ -1,0 +1,1085 @@
+{
+ "_leia": [
+  "Política de licenças do Kalendrium, usada por tools/license-audit/check_licenses.py.",
+  "Componentes DISTRIBUÍDOS (APK de release e de debug) têm regra exata grupo:nome, com a versão revisada:",
+  "artefato novo, versão nova ou licença diferente fazem o CI falhar até alguém revisar licença, NOTICE e conteúdo.",
+  "Só componentes de teste (não distribuídos) usam curinga. A primeira regra que casa vale.",
+  "Escopos: release = vai no APK publicado (inclui o desugar copiado pelo L8); debug = só no APK de teste; test = só testes.",
+  "notice: título da seção em app/src/main/assets/licenca/TERCEIROS.txt (avisos dentro do app).",
+  "embeds: código de terceiros dentro do artefato; license_evidence: justificativa quando a licença no SBOM não basta.",
+  "Detalhes: docs/OPEN_SOURCE_COMPLIANCE_AUDIT.md e THIRD_PARTY_NOTICES.md."
+ ],
+ "licenses": {
+  "Apache-2.0": {
+   "gpl3_compatible": true,
+   "note": "Compatível com a GPL-3.0. Exige cópia da licença e os avisos do NOTICE."
+  },
+  "BSD-3-Clause": {
+   "gpl3_compatible": true,
+   "note": "Em binário, reproduzir o aviso na documentação."
+  },
+  "GPL-2.0-with-classpath-exception": {
+   "gpl3_compatible": true,
+   "note": "A Classpath Exception permite combinar com o app sob outra licença; o código da biblioteca segue GPL-2.0 (fonte correspondente disponível no release)."
+  },
+  "EPL-1.0": {
+   "gpl3_compatible": false,
+   "note": "Incompatível com a GPL. Aceito só em testes, que não são distribuídos (JUnit 4)."
+  }
+ },
+ "license_aliases": {
+  "The Apache Software License, Version 2.0": "Apache-2.0",
+  "Apache License, Version 2.0": "Apache-2.0",
+  "Eclipse Public License 1.0": "EPL-1.0",
+  "New BSD License": "BSD-3-Clause",
+  "GNU General Public License, version 2, with the Classpath Exception": "GPL-2.0-with-classpath-exception"
+ },
+ "components": [
+  {
+   "match": "androidx.activity:activity-compose",
+   "version": "1.9.3",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.activity:activity-ktx",
+   "version": "1.9.3",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.activity:activity",
+   "version": "1.9.3",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.annotation:annotation-experimental",
+   "version": "1.4.1",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.annotation:annotation-jvm",
+   "version": "1.8.1",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.annotation:annotation",
+   "version": "1.8.1",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.arch.core:core-common",
+   "version": "2.2.0",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.arch.core:core-runtime",
+   "version": "2.2.0",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.autofill:autofill",
+   "version": "1.0.0",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.collection:collection-jvm",
+   "version": "1.4.4",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.collection:collection-ktx",
+   "version": "1.4.4",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.collection:collection",
+   "version": "1.4.4",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.animation:animation-android",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.animation:animation-core-android",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.animation:animation-core",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.animation:animation",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.foundation:foundation-android",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.foundation:foundation-layout-android",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.foundation:foundation-layout",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.foundation:foundation",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.material3:material3-android",
+   "version": "1.3.1",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.material3:material3",
+   "version": "1.3.1",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.material:material-icons-core-android",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": [
+    "1. AndroidX (Jetpack)",
+    "9. Material Design Icons"
+   ]
+  },
+  {
+   "match": "androidx.compose.material:material-icons-core",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": [
+    "1. AndroidX (Jetpack)",
+    "9. Material Design Icons"
+   ]
+  },
+  {
+   "match": "androidx.compose.material:material-ripple-android",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.material:material-ripple",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.runtime:runtime-android",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.runtime:runtime-saveable-android",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.runtime:runtime-saveable",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.runtime:runtime",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.ui:ui-android",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.ui:ui-geometry-android",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.ui:ui-geometry",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.ui:ui-graphics-android",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.ui:ui-graphics",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.ui:ui-text-android",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.ui:ui-text",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.ui:ui-unit-android",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.ui:ui-unit",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.ui:ui-util-android",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.ui:ui-util",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose.ui:ui",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.compose:compose-bom",
+   "version": "2024.12.01",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.concurrent:concurrent-futures",
+   "version": "1.1.0",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.core:core-ktx",
+   "version": "1.15.0",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.core:core",
+   "version": "1.15.0",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.customview:customview-poolingcontainer",
+   "version": "1.0.0",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.emoji2:emoji2",
+   "version": "1.3.0",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.graphics:graphics-path",
+   "version": "1.0.1",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)",
+   "embeds": "Biblioteca nativa libandroidx.graphics.path.so (AOSP, Apache-2.0) para 4 ABIs; conferida no APK em 13/10/2026."
+  },
+  {
+   "match": "androidx.interpolator:interpolator",
+   "version": "1.0.0",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.lifecycle:lifecycle-common-java8",
+   "version": "2.8.7",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.lifecycle:lifecycle-common-jvm",
+   "version": "2.8.7",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.lifecycle:lifecycle-common",
+   "version": "2.8.7",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.lifecycle:lifecycle-livedata-core",
+   "version": "2.8.7",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.lifecycle:lifecycle-process",
+   "version": "2.8.7",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.lifecycle:lifecycle-runtime-android",
+   "version": "2.8.7",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.lifecycle:lifecycle-runtime-compose-android",
+   "version": "2.8.7",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.lifecycle:lifecycle-runtime-compose",
+   "version": "2.8.7",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.lifecycle:lifecycle-runtime-ktx-android",
+   "version": "2.8.7",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.lifecycle:lifecycle-runtime-ktx",
+   "version": "2.8.7",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.lifecycle:lifecycle-runtime",
+   "version": "2.8.7",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.lifecycle:lifecycle-viewmodel-android",
+   "version": "2.8.7",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.lifecycle:lifecycle-viewmodel-ktx",
+   "version": "2.8.7",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.lifecycle:lifecycle-viewmodel-savedstate",
+   "version": "2.8.7",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.lifecycle:lifecycle-viewmodel",
+   "version": "2.8.7",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.profileinstaller:profileinstaller",
+   "version": "1.3.1",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.savedstate:savedstate-ktx",
+   "version": "1.2.1",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.savedstate:savedstate",
+   "version": "1.2.1",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.startup:startup-runtime",
+   "version": "1.1.1",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.tracing:tracing",
+   "version": "1.2.0",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "androidx.versionedparcelable:versionedparcelable",
+   "version": "1.1.1",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "1. AndroidX (Jetpack)"
+  },
+  {
+   "match": "com.google.guava:listenablefuture",
+   "version": "1.0",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "6. Guava ListenableFuture"
+  },
+  {
+   "match": "org.jetbrains.kotlin:kotlin-stdlib-common",
+   "version": "2.1.0",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "2. Kotlin (biblioteca padrão"
+  },
+  {
+   "match": "org.jetbrains.kotlin:kotlin-stdlib-jdk7",
+   "version": "1.8.20",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "2. Kotlin (biblioteca padrão"
+  },
+  {
+   "match": "org.jetbrains.kotlin:kotlin-stdlib-jdk8",
+   "version": "1.8.20",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "2. Kotlin (biblioteca padrão"
+  },
+  {
+   "match": "org.jetbrains.kotlin:kotlin-stdlib",
+   "version": "2.1.0",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "2. Kotlin (biblioteca padrão",
+   "embeds": "Código derivado do GWT e do Guava (Apache-2.0) e do Boost (BSL-1.0, sem exigência de aviso em código-objeto), conforme license/README.md do Kotlin 2.1.0."
+  },
+  {
+   "match": "org.jetbrains.kotlinx:kotlinx-coroutines-android",
+   "version": "1.7.3",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "3. kotlinx.coroutines"
+  },
+  {
+   "match": "org.jetbrains.kotlinx:kotlinx-coroutines-bom",
+   "version": "1.7.3",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "3. kotlinx.coroutines"
+  },
+  {
+   "match": "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm",
+   "version": "1.7.3",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "3. kotlinx.coroutines"
+  },
+  {
+   "match": "org.jetbrains.kotlinx:kotlinx-coroutines-core",
+   "version": "1.7.3",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "3. kotlinx.coroutines"
+  },
+  {
+   "match": "org.jetbrains.kotlinx:kotlinx-serialization-bom",
+   "version": "1.7.3",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "4. kotlinx.serialization"
+  },
+  {
+   "match": "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm",
+   "version": "1.7.3",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "4. kotlinx.serialization"
+  },
+  {
+   "match": "org.jetbrains.kotlinx:kotlinx-serialization-core",
+   "version": "1.7.3",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "4. kotlinx.serialization"
+  },
+  {
+   "match": "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm",
+   "version": "1.7.3",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "4. kotlinx.serialization"
+  },
+  {
+   "match": "org.jetbrains.kotlinx:kotlinx-serialization-json",
+   "version": "1.7.3",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "4. kotlinx.serialization"
+  },
+  {
+   "match": "org.jetbrains:annotations",
+   "version": "23.0.0",
+   "license": "Apache-2.0",
+   "scopes": [
+    "release",
+    "debug",
+    "test"
+   ],
+   "notice": "5. JetBrains Java Annotations"
+  },
+  {
+   "match": "com.android.tools:desugar_jdk_libs",
+   "version": "2.1.3",
+   "license": "GPL-2.0-with-classpath-exception",
+   "scopes": [
+    "release"
+   ],
+   "notice": "7. desugar_jdk_libs",
+   "embeds": "java.time do OpenJDK com o aviso BSD-3-Clause do ThreeTen (JSR-310) em 93 de 96 arquivos; ~141 classes j$.time no APK. Fonte correspondente: third_party/licenses/desugar_jdk_libs/SOURCE.txt."
+  },
+  {
+   "match": "com.android.tools:desugar_jdk_libs_configuration",
+   "version": "2.1.3",
+   "license": "BSD-3-Clause",
+   "scopes": [
+    "release"
+   ],
+   "notice": "7. desugar_jdk_libs",
+   "license_evidence": "Só configuração do L8 (JSON e adaptadores); nenhuma das classes dele aparece no APK de release (conferido em 13/10/2026). Fica coberto pelo aviso do desugar_jdk_libs."
+  },
+  {
+   "match": "androidx.compose.ui:ui-test-manifest",
+   "version": "1.7.6",
+   "license": "Apache-2.0",
+   "scopes": [
+    "debug",
+    "test"
+   ]
+  },
+  {
+   "match": "androidx.compose.ui:ui-test*",
+   "license": "Apache-2.0",
+   "scopes": [
+    "test"
+   ]
+  },
+  {
+   "match": "androidx.test*:*",
+   "license": "Apache-2.0",
+   "scopes": [
+    "test"
+   ]
+  },
+  {
+   "match": "androidx.concurrent:concurrent-futures-ktx",
+   "license": "Apache-2.0",
+   "scopes": [
+    "test"
+   ]
+  },
+  {
+   "match": "org.jetbrains.kotlinx:kotlinx-coroutines-test*",
+   "license": "Apache-2.0",
+   "scopes": [
+    "test"
+   ]
+  },
+  {
+   "match": "junit:junit",
+   "license": "EPL-1.0",
+   "scopes": [
+    "test"
+   ]
+  },
+  {
+   "match": "org.hamcrest:*",
+   "license": "BSD-3-Clause",
+   "scopes": [
+    "test"
+   ]
+  },
+  {
+   "match": "com.google.code.findbugs:jsr305",
+   "license": "Apache-2.0",
+   "scopes": [
+    "test"
+   ]
+  },
+  {
+   "match": "com.squareup:javawriter",
+   "license": "Apache-2.0",
+   "scopes": [
+    "test"
+   ]
+  },
+  {
+   "match": "javax.inject:javax.inject",
+   "license": "Apache-2.0",
+   "scopes": [
+    "test"
+   ]
+  }
+ ]
+}

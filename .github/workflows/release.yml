@@ -1,3 +1,5 @@
+# Kalendrium — Copyright (C) 2026 Juscelino Be
+# SPDX-License-Identifier: GPL-3.0-or-later
 name: Release
 
 # Gera o APK de release assinado e publica num GitHub Release.
@@ -5,6 +7,9 @@ name: Release
 # - "Run workflow" na aba Actions → pré-release teste-<número da execução>
 # - pull request → só builda e anexa o APK à execução (não publica)
 # Assina com os secrets KALENDRIUM_* se existirem; senão, com a chave de TESTE em ci/ (ver ci/README.md).
+# Cada release publicado leva também o código-fonte do desugar_jdk_libs (GPL 2.0 com Classpath Exception),
+# cujo código vai dentro do APK: ver third_party/licenses/desugar_jdk_libs/SOURCE.txt.
+# Actions fixadas pelo SHA do commit (versão no comentário); como atualizar: .github/workflows/license-audit.yml.
 
 on:
   push:
@@ -19,14 +24,17 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: '17'
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          # cache open source (MIT); o padrão do v6 é um cache proprietário
+          cache-provider: basic
 
       - name: Preparar assinatura
         env:
@@ -64,7 +72,7 @@ jobs:
 
       - name: Anexar APK à execução
         if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: kalendrium-release-apk
           path: app/build/outputs/apk/release/app-release.apk
@@ -81,5 +89,12 @@ jobs:
           fi
           APK="kalendrium-$TAG.apk"
           cp app/build/outputs/apk/release/app-release.apk "$APK"
-          gh release create "$TAG" "$APK" --target "$GITHUB_SHA" --title "Kalendrium $TAG" $EXTRA \
-            --notes "APK de release assinado com a chave: $CHAVE. Commit $GITHUB_SHA."
+          # código-fonte do desugar_jdk_libs que vai no APK (GPL 2.0, seção 3: no mesmo lugar que o binário)
+          DV=$(sed -n 's/^desugar *= *"\(.*\)"/\1/p' gradle/libs.versions.toml)
+          DC=$(sed -n 's/^Commit da versão: \([0-9a-f]\{40\}\)$/\1/p' third_party/licenses/desugar_jdk_libs/SOURCE.txt)
+          grep -q "^Versão: $DV " third_party/licenses/desugar_jdk_libs/SOURCE.txt && [ -n "$DC" ] || {
+            echo "::error::Código-fonte do desugar_jdk_libs $DV não registrado em third_party/licenses/desugar_jdk_libs/SOURCE.txt"; exit 1; }
+          SRC="desugar_jdk_libs-$DV-codigo-fonte.tar.gz"
+          curl -fsSL --retry 3 -o "$SRC" "https://github.com/google/desugar_jdk_libs/archive/$DC.tar.gz"
+          gh release create "$TAG" "$APK" "$SRC" --target "$GITHUB_SHA" --title "Kalendrium $TAG" $EXTRA \
+            --notes "APK de release assinado com a chave: $CHAVE. Commit $GITHUB_SHA. Código-fonte do Kalendrium: este repositório nesta tag. $SRC: código-fonte do desugar_jdk_libs incluído no APK (GPL 2.0 com Classpath Exception)."
