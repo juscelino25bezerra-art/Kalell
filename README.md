@@ -173,15 +173,14 @@ só mudam os dados, as ações e o conteúdo de cada dia (`PersonalDayCell` / `W
 
 ## Ícone
 
-O ícone de referência é o calendário azul com três pontos enviado pelo Juscelino (`docs/icone/kalendrium-icone-original.png`,
-192×192). Como a referência é pequena e sem suavização, o desenho foi medido nela e é redesenhado pelo gerador com a mesma
-geometria e a mesma cor (#8EB4D9), para ficar nítido em todos os tamanhos.
-- Android 8+: ícone adaptativo; calendário (54 dp, dentro da zona segura de 66 dp) sobre fundo branco, então nenhuma máscara
-  (círculo, squircle, quadrado) corta o desenho. Android 13+: versão monocromática temática (`drawable/ic_launcher_monochrome.xml`).
-- Android 7: `ic_launcher` (o próprio calendário, faixa e pontos em branco) e `ic_launcher_round` (calendário num círculo
-  branco), de mdpi a xxxhdpi em `res/mipmap-*`.
+O ícone é o **"Dia e noite"**: sol e lua sobre uma faixa de semana com escala 2×2 (pontos âmbar = trabalho, azuis = folga),
+em estilo Material flat, sem transparência ou brilho. Cores: fundo azul profundo #1E3A8A, destaque âmbar #F5A524 e branco.
+- Android 8+: ícone adaptativo em vetor (`drawable/ic_launcher_foreground.xml` sobre a cor `ic_launcher_background`); o
+  desenho fica dentro da zona segura de 66 dp, então nenhuma máscara (círculo, squircle, quadrado) corta nada.
+  Android 13+: versão monocromática temática (`drawable/ic_launcher_monochrome.xml`).
+- Android 7: `ic_launcher` (quadrado arredondado) e `ic_launcher_round`, de mdpi a xxxhdpi em `res/mipmap-*`.
 - Play Store: `docs/icone/ic_launcher-playstore.png` (512×512). Para regenerar tudo: `python3 docs/icone/gerador/gerar_icones.py`
-  `app/src/main docs/icone` (precisa de Pillow).
+  `app/src/main docs/icone` (precisa de cairosvg). O ícone anterior (calendário com "K") continua em `docs/icone/` só como histórico.
 
 ## Créditos e licenças
 
