@@ -1,5 +1,15 @@
+// Kalendrium — Copyright (C) 2026 Juscelino Be
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 package com.kalendrium.ui
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalUriHandler
 import com.kalendrium.domain.L
@@ -227,11 +237,50 @@ private fun CreditsSection() {
             }
         }
     }
+    LicensesSection()
+}
+
+/**
+ * Ajustes › Sobre › Licenças: licença do Kalendrium e avisos de terceiros, lidos dos assets (sem internet).
+ * Textos em app/src/main/assets/licenca/ (fonte: THIRD_PARTY_NOTICES.md e third_party/licenses/).
+ */
+@Composable
+private fun LicensesSection() {
+    val c = Look.colors
+    Text(L("Licenças", "Licenses", "Licencias"), fontSize = 19.sp, fontWeight = FontWeight.Bold, color = c.onSurface, modifier = Modifier.padding(top = 26.dp, bottom = 4.dp))
     Para(L(
-        "Licenças completas: no repositório de cada projeto. A da fonte Manrope também está em docs/MANROPE-OFL.txt no código do Kalendrium, e esta lista em docs/CREDITOS.md.",
-        "Full licenses: in each project's repository. The Manrope font license is also in docs/MANROPE-OFL.txt in Kalendrium's source, and this list in docs/CREDITOS.md.",
-        "Licencias completas: en el repositorio de cada proyecto. La de la fuente Manrope también está en docs/MANROPE-OFL.txt en el código de Kalendrium, y esta lista en docs/CREDITOS.md.",
-    ), Modifier.padding(top = 12.dp))
+        "Kalendrium — Copyright (C) 2026 Juscelino Be. Software livre sob a GNU GPL versão 3 ou posterior (GPL-3.0-or-later): você pode usar, estudar, compartilhar e modificar o app nos termos dessa licença. Ele é distribuído SEM NENHUMA GARANTIA. Cada componente de terceiros continua sob a própria licença; os avisos e textos completos estão abaixo e funcionam sem internet.",
+        "Kalendrium — Copyright (C) 2026 Juscelino Be. Free software under the GNU GPL version 3 or later (GPL-3.0-or-later): you may use, study, share and modify the app under the terms of that license. It comes WITHOUT ANY WARRANTY. Each third-party component stays under its own license; the notices and full texts are below and work offline.",
+        "Kalendrium — Copyright (C) 2026 Juscelino Be. Software libre bajo la GNU GPL versión 3 o posterior (GPL-3.0-or-later): puede usar, estudiar, compartir y modificar la app según esa licencia. Se distribuye SIN NINGUNA GARANTÍA. Cada componente de terceros mantiene su propia licencia; los avisos y textos completos están abajo y funcionan sin internet.",
+    ), Modifier.padding(bottom = 4.dp))
+    var gpl by rememberSaveable { mutableStateOf(false) }
+    var third by rememberSaveable { mutableStateOf(false) }
+    ButtonRow {
+        AppButton(if (gpl) L("Ocultar licença do Kalendrium", "Hide Kalendrium license", "Ocultar licencia de Kalendrium") else L("Ver licença do Kalendrium (GPL 3.0)", "View Kalendrium license (GPL 3.0)", "Ver licencia de Kalendrium (GPL 3.0)"), { gpl = !gpl })
+    }
+    if (gpl) LicenseText("licenca/LICENSE.txt")
+    ButtonRow {
+        AppButton(if (third) L("Ocultar avisos de terceiros", "Hide third-party notices", "Ocultar avisos de terceros") else L("Ver avisos e licenças de terceiros", "View third-party notices and licenses", "Ver avisos y licencias de terceros"), { third = !third })
+    }
+    if (third) LicenseText("licenca/TERCEIROS.txt")
+}
+
+/** Texto de licença dos assets, em blocos (parágrafos) para não montar um único Text enorme. */
+@Composable
+private fun LicenseText(asset: String) {
+    val c = Look.colors
+    val context = LocalContext.current
+    val blocks = remember(asset) {
+        runCatching { context.assets.open(asset).bufferedReader(Charsets.UTF_8).use { it.readText() } }
+            .getOrDefault("").replace("\r\n", "\n").split(Regex("\n[ \t]*\n")).map { it.trimEnd() }.filter { it.isNotBlank() }
+    }
+    Column(
+        Modifier.fillMaxWidth().padding(top = 10.dp).clip(RoundedCornerShape(14.dp)).background(c.surface).padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        if (blocks.isEmpty()) Para(L("Texto indisponível.", "Text unavailable.", "Texto no disponible."))
+        blocks.forEach { Text(it, fontSize = 11.sp, lineHeight = 15.sp, color = c.onSurface, fontFamily = FontFamily.Monospace) }
+    }
 }
 
 private val ABOUT_PT = listOf(

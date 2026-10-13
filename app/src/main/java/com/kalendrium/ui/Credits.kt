@@ -1,10 +1,14 @@
+// Kalendrium — Copyright (C) 2026 Juscelino Be
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 package com.kalendrium.ui
 
 import com.kalendrium.domain.L
 
 /**
  * Projetos de terceiros usados no Kalendrium, mostrados em Ajustes › Sobre.
- * Manter igual a docs/CREDITOS.md: ao adicionar ou trocar uma dependência, atualize os dois.
+ * Manter igual a THIRD_PARTY_NOTICES.md e a app/src/main/assets/licenca/TERCEIROS.txt: ao adicionar ou trocar
+ * uma dependência, atualize os três (o CI de licenças aponta o que faltar).
  */
 data class Credit(val name: String, val use: String, val license: String, val url: String)
 
@@ -24,7 +28,8 @@ object Credits {
                 Credit("kotlinx.serialization", L("Leitura e gravação do JSON (dados e backup)", "Reading and writing JSON (data and backup)", "Lectura y escritura del JSON (datos y copia)"), APACHE, "https://github.com/Kotlin/kotlinx.serialization"),
                 Credit("Jetpack Compose", L("Interface: UI, Foundation, Material 3 e Material Icons", "Interface: UI, Foundation, Material 3 and Material Icons", "Interfaz: UI, Foundation, Material 3 y Material Icons"), APACHE, "https://github.com/androidx/androidx"),
                 Credit("AndroidX Core, Activity e Lifecycle", L("Base do app Android", "Android app foundation", "Base de la app Android"), APACHE, "https://github.com/androidx/androidx"),
-                Credit("desugar_jdk_libs", L("Datas (java.time) no Android 7", "Dates (java.time) on Android 7", "Fechas (java.time) en Android 7"), "GPL 2.0 + Classpath Exception", "https://github.com/google/desugar_jdk_libs"),
+                Credit("JetBrains Annotations e Guava ListenableFuture", L("Dependências internas do Kotlin e do AndroidX", "Internal dependencies of Kotlin and AndroidX", "Dependencias internas de Kotlin y AndroidX"), APACHE, "https://github.com/google/guava"),
+                Credit("desugar_jdk_libs", L("Datas (java.time) no Android 7; inclui o aviso BSD do ThreeTen", "Dates (java.time) on Android 7; includes the ThreeTen BSD notice", "Fechas (java.time) en Android 7; incluye el aviso BSD de ThreeTen"), "GPL 2.0 + Classpath Exception", "https://github.com/google/desugar_jdk_libs"),
             ),
         ),
         CreditGroup(
