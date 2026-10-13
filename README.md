@@ -72,7 +72,6 @@ O nome do usuário e a aba ficam só no aparelho, fora do backup.
 - Chips de escala em pílula (a selecionada ganha ✓), botão "Nova escala" tracejado, calendário com mês à esquerda e setas à direita.
 - Dias do mês só com o número e os pontos das outras escalas: trabalho/folga pela cor, hoje com o dia inteiro na cor primária. O bloco e a situação completa aparecem ao tocar no dia (visualização mensal + diária) e no leitor de tela.
 - Barra inferior com indicador em pílula.
-- **Liquid Glass**: vidro fosco simulado (`glassSurface` em `Components.kt`): preenchimento translúcido, brilho no topo e borda clara, sobre manchas de cor em gradiente radial. Não usa desfoque real, então fica igual do Android 7 em diante.
 - Só a camada visual mudou: lógica, dados, textos e ações continuam os mesmos, e as 10 paletas e o modo escuro continuam valendo.
 
 ## Estrutura
@@ -98,7 +97,7 @@ app/src/main/java/com/kalendrium/
     Sheets.kt         editar escala, mudança, nota, período, compartilhar, mês, mensagens
     SettingsSheet.kt  Temas / Dados / Idiomas / Sobre
     Render.kt         imagem "Compartilhar período" e "PDF do ano"
-    theme/            10 paletas × claro/escuro (copiadas do style.css), Material 3 e Liquid Glass
+    theme/            paletas × claro/escuro (copiadas do style.css)
   app/      só Android: MainActivity, ViewModel, arquivos (SAF), PDF (PdfDocument), FileProvider
 ```
 
@@ -119,7 +118,7 @@ Na diária do Pessoal, tocar numa hora vazia cria um evento já naquele horário
 - Mudanças a partir de uma data (só recalculam dali em diante), "Manter os dias anteriores como estão" (eras preservadas),
   remapeamento das mudanças quando os blocos são editados, avisos e confirmações com os mesmos textos.
 - Notas (500 caracteres, cor, alinhamento), feriados, períodos (férias/licenças) por escala.
-- Temas: Sistema/Claro/Escuro, estilos Material 3 e Liquid Glass, paletas Material You, Gruvbox, Nord, Dracula,
+- Temas: Sistema/Claro/Escuro, paletas Kalendrium, Material You, Gruvbox, Nord, Dracula,
   Catppuccin, Tokyo Night, Solarized, Everforest, One Dark e Rosé Pine.
 - Backup: exporta/importa **o mesmo JSON do PWA** (`app: "minha-escala"`, `version: 3`), com a mesma validação estrita,
   cópia `.bak`/`.bak2` antes de importar e "Último backup exportado".
@@ -131,7 +130,7 @@ Na diária do Pessoal, tocar numa hora vazia cria um evento já naquele horário
 
 - Símbolos de texto (⚙ ✎ ‹ › ＋ × ◐ ☀ ●) trocados por **Material Icons** (pacote core + 6 ícones copiados em `ui/AppIcons.kt`, sem a biblioteca extended, que pesa muito no build release).
 - Seletores nativos do Android: data (DatePicker do Material 3), arquivos (Salvar/Abrir do sistema) e folha de compartilhamento.
-- O Liquid Glass simula o vidro com gradientes e transparência (como o modo "Lite" do PWA), sem desfoque do fundo.
+- O estilo Liquid Glass foi removido na 6.1: o app tem só o visual Material 3. Backups com `"uiStyle": "glass"` continuam importando (o valor é ignorado).
 - Coisas só de navegador saíram: service worker, sincronização entre abas, aviso "Nova versão instalada".
 - Os dados ficam em arquivos privados do app, gravados com `AtomicFile` em segundo plano. Se um arquivo não puder ser
   lido, o app avisa e não grava por cima; dados inválidos são corrigidos e o original fica numa cópia `.bak`, que pode ser
@@ -183,3 +182,7 @@ geometria e a mesma cor (#8EB4D9), para ficar nítido em todos os tamanhos.
   branco), de mdpi a xxxhdpi em `res/mipmap-*`.
 - Play Store: `docs/icone/ic_launcher-playstore.png` (512×512). Para regenerar tudo: `python3 docs/icone/gerador/gerar_icones.py`
   `app/src/main docs/icone` (precisa de Pillow).
+
+## Créditos e licenças
+
+Todas as bibliotecas, a fonte, os ícones e as paletas de cores usadas no Kalendrium, com licença e link para cada projeto, estão em [docs/CREDITOS.md](docs/CREDITOS.md). A mesma lista aparece no app em Ajustes › Sobre.

@@ -91,36 +91,16 @@ fun Modifier.press(enabled: Boolean = true, role: Role = Role.Button, onClick: (
         .clickable(interactionSource = src, indication = null, enabled = enabled, role = role, onClick = onClick)
 }
 
-/**
- * Vidro fosco simulado: preenchimento translúcido, brilho suave no topo e borda clara.
- * Não usa desfoque real (RenderEffect só existe a partir do Android 12), então funciona igual do Android 7 em diante.
- */
-@Composable
-fun Modifier.glassSurface(shape: Shape, strong: Boolean = false): Modifier {
-    val look = Look.current
-    val fill = if (strong) look.glassStrong else look.glassColor
-    val shine = look.glassHighlight
-    return this.clip(shape)
-        .background(fill)
-        .drawBehind {
-            // brilho do topo (luz batendo na borda superior do vidro)
-            drawRect(Brush.verticalGradient(listOf(shine, Color.Transparent), startY = 0f, endY = minOf(size.height * .55f, 64.dp.toPx())))
-        }
-        .border(1.dp, look.glassBorder, shape)
-}
-
-/** Fundo de controle: sólido (Material 3) ou vidro (Liquid Glass). */
+/** Fundo de controle. */
 @Composable
 fun Modifier.controlSurface(shape: Shape, solid: Color = Look.colors.secondaryContainer): Modifier {
-    val look = Look.current
-    return if (look.glass) this.glassSurface(shape) else this.clip(shape).background(solid)
+    return this.clip(shape).background(solid)
 }
 
 /** Cartão grande (calendário, mudanças, períodos, resumo). */
 @Composable
 fun Modifier.cardSurface(shape: Shape = RoundedCornerShape(28.dp), solid: Color = Look.current.card): Modifier {
-    val look = Look.current
-    return if (look.glass) this.glassSurface(shape, strong = true) else this.clip(shape).background(solid)
+    return this.clip(shape).background(solid)
 }
 
 /** Contorno tracejado (botão "Nova escala"). */
@@ -202,9 +182,8 @@ fun Field(label: String, modifier: Modifier = Modifier, help: String? = null, co
 
 @Composable
 fun fieldSurface(shape: Shape): Modifier {
-    val look = Look.current
-    return if (look.glass) Modifier.clip(shape).background(look.colors.surface.copy(alpha = .72f)).border(1.dp, look.glassBorder, shape)
-    else Modifier.clip(shape).background(look.colors.surface).border(1.dp, look.colors.outline, shape)
+    val c = Look.colors
+    return Modifier.clip(shape).background(c.surface).border(1.dp, c.outline, shape)
 }
 
 @Composable
@@ -232,7 +211,7 @@ fun AppTextField(
         modifier = modifier.fillMaxWidth(),
         decorationBox = { inner ->
             Box(
-                (if (compact) Modifier.clip(shape).background(if (Look.current.glass) c.surface.copy(alpha = .72f) else c.surfaceContainer).border(1.dp, if (Look.current.glass) Look.current.glassBorder else c.outlineVar, shape)
+                (if (compact) Modifier.clip(shape).background(c.surfaceContainer).border(1.dp, c.outlineVar, shape)
                 else fieldSurface(shape)).padding(if (compact) 9.dp else 13.dp),
             ) {
                 if (value.isEmpty() && placeholder.isNotEmpty()) Text(placeholder, color = c.onSurfaceVar.copy(alpha = .7f), fontSize = if (compact) 14.sp else 16.sp, fontWeight = if (compact) FontWeight.Bold else FontWeight.Normal)
@@ -353,7 +332,7 @@ fun AppSheet(
     val look = Look.current
     val c = look.colors
     val shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp)
-    val container = if (look.glass) c.surfaceContainer.copy(alpha = .97f) else c.surfaceContainer
+    val container = c.surfaceContainer
     val handle = @Composable {
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             Box(Modifier.padding(top = 12.dp, bottom = 14.dp).size(34.dp, 4.dp).clip(RoundedCornerShape(3.dp)).background(c.outline))
@@ -403,7 +382,7 @@ fun AppSheet(
         shape = shape,
         containerColor = container,
         contentColor = c.onSurface,
-        scrimColor = Color.Black.copy(alpha = if (look.glass) .4f else .53f),
+        scrimColor = Color.Black.copy(alpha = .53f),
         dragHandle = { handle() },
     ) { body() }
 }

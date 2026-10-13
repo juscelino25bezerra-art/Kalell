@@ -97,6 +97,7 @@ data class AppData(
         /** Paleta do redesign 6.0: padrão das instalações novas. */
         const val DEFAULT_PALETTE = "kalendrium"
         val THEMES = listOf("system", "light", "dark")
+        /** O app só tem o estilo Material 3; "glass" continua aceito para backups antigos e do PWA importarem (e é ignorado). */
         val STYLES = listOf("material", "glass")
         const val MAX_SCHEDULES = 20
         /** Escalas além da principal (ficam em `groups`). */

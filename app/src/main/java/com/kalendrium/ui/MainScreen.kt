@@ -66,22 +66,13 @@ fun KalendriumApp(ctl: AppController) {
     val data = ctl.data
     // trocar o idioma recompõe a tela inteira (os textos não são estado do Compose)
     key(ctl.lang) {
-    AppTheme(data.palette, data.theme, data.uiStyle, ctl.current.color, dynamic = data.dynamicColor) {
+    AppTheme(data.palette, data.theme, ctl.current.color, dynamic = data.dynamicColor) {
         val tm = rememberTextMeasurer()
         SideEffect { ctl.textMeasurer = tm }
         val look = Look.current
         val c = look.colors
         Box(
-            Modifier.fillMaxSize().background(look.page).drawBehind {
-                if (look.glass) {
-                    // manchas de cor por trás do vidro: gradientes radiais (leves e iguais em qualquer versão do Android)
-                    val a = if (c.dark) .55f else 1f
-                    drawRect(Brush.radialGradient(listOf(c.primary.copy(alpha = .34f * a), Color.Transparent), Offset(size.width * .05f, size.height * .10f), 300.dp.toPx()))
-                    drawRect(Brush.radialGradient(listOf(c.offStrong.copy(alpha = .22f * a), Color.Transparent), Offset(size.width * 1.02f, size.height * .36f), 280.dp.toPx()))
-                    drawRect(Brush.radialGradient(listOf(look.sc.copy(alpha = .26f * a), Color.Transparent), Offset(size.width * .02f, size.height * .70f), 280.dp.toPx()))
-                    drawRect(Brush.radialGradient(listOf(c.primary.copy(alpha = .20f * a), Color.Transparent), Offset(size.width * .95f, size.height * .96f), 260.dp.toPx()))
-                }
-            },
+            Modifier.fillMaxSize().background(look.page),
         ) {
             // leitura inicial dos arquivos (fora da thread principal): só o fundo por alguns milissegundos
             if (ctl.loaded) {
@@ -126,7 +117,7 @@ fun ScreenScroll(state: ScrollState = rememberScrollState(), content: @Composabl
             verticalArrangement = Arrangement.spacedBy(18.dp),
             content = content,
         )
-        Spacer(Modifier.height(if (Look.current.glass) 118.dp else 104.dp))
+        Spacer(Modifier.height(104.dp))
         Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
     }
 }
@@ -142,7 +133,6 @@ fun ScreenTitle(title: String, modifier: Modifier = Modifier, actions: @Composab
 
 /**
  * Barra inferior única do redesign: Hoje, Calendário, "+" (novo evento), Escalas e Notas.
- * No estilo Liquid Glass vira uma pílula de vidro flutuante.
  */
 @Composable
 private fun BottomNav(ctl: AppController, modifier: Modifier) {
@@ -154,7 +144,7 @@ private fun BottomNav(ctl: AppController, modifier: Modifier) {
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
             val shape = RoundedCornerShape(20.dp)
             Box(
-                Modifier.offset(y = if (look.glass) 0.dp else (-14).dp).size(58.dp).shadow(10.dp, shape, ambientColor = c.primary, spotColor = c.primary)
+                Modifier.offset(y = (-14).dp).size(58.dp).shadow(10.dp, shape, ambientColor = c.primary, spotColor = c.primary)
                     .clip(shape).background(c.primary)
                     .press { ctl.openEvent(if (ctl.tab == Tab.CALENDAR) Dates.iso(ctl.selected) else Dates.iso(ctl.today)) },
                 contentAlignment = Alignment.Center,
@@ -163,21 +153,10 @@ private fun BottomNav(ctl: AppController, modifier: Modifier) {
         NavTab(KIcons.Briefcase, L("Escalas", "Schedules", "Horarios"), ctl.tab == Tab.SCHEDULES) { ctl.selectTab(Tab.SCHEDULES) }
         NavTab(KIcons.Notes, L("Notas", "Notes", "Notas"), ctl.tab == Tab.NOTES) { ctl.selectTab(Tab.NOTES) }
     }
-    if (look.glass) {
-        val shape = RoundedCornerShape(36.dp)
-        Box(modifier.fillMaxWidth().navigationBarsPadding().padding(bottom = 12.dp), contentAlignment = Alignment.Center) {
-            Row(
-                Modifier.widthIn(max = 520.dp).padding(horizontal = 14.dp).fillMaxWidth().height(76.dp)
-                    .glassSurface(shape, strong = true).padding(horizontal = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) { items() }
-        }
-    } else {
-        Column(modifier.fillMaxWidth().background(look.card)) {
-            HorizontalDivider(color = c.outlineVar, thickness = 1.dp)
-            Box(Modifier.fillMaxWidth().navigationBarsPadding(), contentAlignment = Alignment.Center) {
-                Row(Modifier.widthIn(max = 560.dp).fillMaxWidth().height(74.dp).padding(horizontal = 6.dp), verticalAlignment = Alignment.CenterVertically) { items() }
-            }
+    Column(modifier.fillMaxWidth().background(look.card)) {
+        HorizontalDivider(color = c.outlineVar, thickness = 1.dp)
+        Box(Modifier.fillMaxWidth().navigationBarsPadding(), contentAlignment = Alignment.Center) {
+            Row(Modifier.widthIn(max = 560.dp).fillMaxWidth().height(74.dp).padding(horizontal = 6.dp), verticalAlignment = Alignment.CenterVertically) { items() }
         }
     }
 }
