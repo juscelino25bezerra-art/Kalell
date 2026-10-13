@@ -1,6 +1,10 @@
 package com.kalendrium.ui
 
 import com.kalendrium.domain.L
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.HazeTint
+import dev.chrisbanes.haze.hazeEffect
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -104,6 +108,29 @@ fun Modifier.glassSurface(shape: Shape, strong: Boolean = false): Modifier {
         .background(fill)
         .drawBehind {
             // brilho do topo (luz batendo na borda superior do vidro)
+            drawRect(Brush.verticalGradient(listOf(shine, Color.Transparent), startY = 0f, endY = minOf(size.height * .55f, 64.dp.toPx())))
+        }
+        .border(1.dp, look.glassBorder, shape)
+}
+
+/**
+ * Vidro com desfoque real (biblioteca Haze): o que passa por trás de [state] aparece desfocado.
+ * Android 12L+ desfoca com RenderEffect; nas versões anteriores o Haze desenha só [AppLook.glassFallback].
+ */
+@Composable
+fun Modifier.hazeGlass(state: HazeState, shape: Shape): Modifier {
+    val look = Look.current
+    val shine = look.glassHighlight
+    val style = HazeStyle(
+        backgroundColor = look.page,
+        tint = HazeTint(look.glassFrost),
+        blurRadius = 22.dp,
+        noiseFactor = .12f,
+        fallbackTint = HazeTint(look.glassFallback),
+    )
+    return this.clip(shape)
+        .hazeEffect(state, style)
+        .drawBehind {
             drawRect(Brush.verticalGradient(listOf(shine, Color.Transparent), startY = 0f, endY = minOf(size.height * .55f, 64.dp.toPx())))
         }
         .border(1.dp, look.glassBorder, shape)

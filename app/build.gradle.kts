@@ -86,6 +86,8 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.core)
     implementation(libs.kotlinx.serialization.json)
+    // desfoque real do estilo Liquid Glass (Android 12L+; nas versões antigas vira vidro opaco)
+    implementation(libs.haze)
     testImplementation(libs.junit)
 
     // testes no aparelho/emulador (Android Studio: app/src/androidTest › Run)

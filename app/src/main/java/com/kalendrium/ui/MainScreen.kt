@@ -1,6 +1,15 @@
 package com.kalendrium.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.asPaddingValues
+import dev.chrisbanes.haze.HazeProgressive
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.HazeTint
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -71,8 +80,11 @@ fun KalendriumApp(ctl: AppController) {
         SideEffect { ctl.textMeasurer = tm }
         val look = Look.current
         val c = look.colors
+        // Haze: tudo que fica atrás das superfícies flutuantes (fundo + aba atual) é a "fonte" do desfoque
+        val haze = remember { HazeState() }
+        Box(Modifier.fillMaxSize()) {
         Box(
-            Modifier.fillMaxSize().background(look.page).drawBehind {
+            Modifier.fillMaxSize().then(if (look.glass) Modifier.hazeSource(haze) else Modifier).background(look.page).drawBehind {
                 if (look.glass) {
                     // manchas de cor por trás do vidro: gradientes radiais (leves e iguais em qualquer versão do Android)
                     val a = if (c.dark) .55f else 1f
@@ -93,8 +105,13 @@ fun KalendriumApp(ctl: AppController) {
                     Tab.SCHEDULES -> SchedulesScreen(ctl)
                     Tab.NOTES -> NotesScreen(ctl)
                 }
-                BottomNav(ctl, Modifier.align(Alignment.BottomCenter))
             }
+        }
+        if (ctl.loaded) {
+            // faixa desfocada sob a barra de status: o conteúdo some suavemente ao rolar
+            if (look.glass) StatusBarHaze(haze)
+            BottomNav(ctl, haze, Modifier.align(Alignment.BottomCenter))
+        }
         }
         when (val s = ctl.sheet) {
             is Sheet.Cycle -> CycleSheet(ctl, s.target, s.mode)
@@ -145,7 +162,7 @@ fun ScreenTitle(title: String, modifier: Modifier = Modifier, actions: @Composab
  * No estilo Liquid Glass vira uma pílula de vidro flutuante.
  */
 @Composable
-private fun BottomNav(ctl: AppController, modifier: Modifier) {
+private fun BottomNav(ctl: AppController, haze: HazeState, modifier: Modifier) {
     val look = Look.current
     val c = look.colors
     val items: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit = {
@@ -168,7 +185,7 @@ private fun BottomNav(ctl: AppController, modifier: Modifier) {
         Box(modifier.fillMaxWidth().navigationBarsPadding().padding(bottom = 12.dp), contentAlignment = Alignment.Center) {
             Row(
                 Modifier.widthIn(max = 520.dp).padding(horizontal = 14.dp).fillMaxWidth().height(76.dp)
-                    .glassSurface(shape, strong = true).padding(horizontal = 4.dp),
+                    .hazeGlass(haze, shape).padding(horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) { items() }
         }
@@ -180,6 +197,18 @@ private fun BottomNav(ctl: AppController, modifier: Modifier) {
             }
         }
     }
+}
+
+/** Desfoque progressivo atrás da barra de status (só no Liquid Glass): forte no topo, some até 20 dp abaixo. */
+@Composable
+private fun StatusBarHaze(haze: HazeState) {
+    val look = Look.current
+    val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    Box(
+        Modifier.fillMaxWidth().height(top + 20.dp).hazeEffect(haze, HazeStyle(backgroundColor = look.page, tint = HazeTint(look.page.copy(alpha = .35f)), blurRadius = 18.dp, noiseFactor = 0f, fallbackTint = HazeTint(Color.Transparent))) {
+            progressive = HazeProgressive.verticalGradient(startIntensity = 1f, endIntensity = 0f)
+        },
+    )
 }
 
 @Composable

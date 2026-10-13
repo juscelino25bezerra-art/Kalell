@@ -56,6 +56,10 @@ data class AppLook(val colors: AppColors, val glass: Boolean, val sc: Color) {
     val glassStrong get() = glassBase.copy(alpha = if (colors.dark) .72f else .70f)
     val glassBorder get() = if (colors.dark) Color.White.copy(alpha = .14f) else Color.White.copy(alpha = .78f)
     val glassHighlight get() = Color.White.copy(alpha = if (colors.dark) .10f else .55f)
+    // Haze (desfoque real, Android 12L+): com o fundo desfocado o vidro pode ser mais transparente
+    val glassFrost get() = glassBase.copy(alpha = if (colors.dark) .42f else .40f)
+    // Android antigo (sem desfoque): vidro quase opaco para o texto de trás não atrapalhar a leitura
+    val glassFallback get() = glassBase.copy(alpha = if (colors.dark) .90f else .88f)
 }
 
 /** Manrope (SIL OFL, docs/MANROPE-OFL.txt): fonte do redesign, embutida no APK para funcionar sem internet. */
