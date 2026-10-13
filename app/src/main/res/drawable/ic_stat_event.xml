@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Ícone da notificação de lembrete (Material Icons "event", Apache 2.0). -->
+<!-- Ícone da notificação de lembrete: Material Icons "event" (filled), Google, Apache License 2.0
+     (https://github.com/google/material-design-icons, src/action/event/materialicons/24px.svg).
+     MODIFICADO pelo Kalendrium: convertido de SVG para VectorDrawable, preenchimento branco; desenho igual ao original. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"

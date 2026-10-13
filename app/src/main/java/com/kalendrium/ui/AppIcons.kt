@@ -1,5 +1,11 @@
+// SPDX-License-Identifier: Apache-2.0
 /*
- * Ícones copiados do Material Icons Extended (Apache License 2.0, The Android Open Source Project).
+ * Ícones copiados do Material Icons Extended (Apache License 2.0, The Android Open Source Project;
+ * desenhos de https://github.com/google/material-design-icons, Google).
+ * Este arquivo continua sob a Apache 2.0 (texto em third_party/licenses/Apache-2.0.txt e no app).
+ * MODIFICADO pelo Kalendrium (Juscelino Be, 2026): os ícones foram reunidos no objeto AppIcons, com
+ * carregamento preguiçoso (by lazy); Schedule e GridView usam ImageVector.Builder com addPathNodes em vez
+ * do DSL materialIcon. Os desenhos não mudaram (conferidos pixel a pixel com os SVG originais em 13/10/2026).
  * Só estes são usados: copiá-los evita a dependência material-icons-extended, que deixa o build
  * release (R8/L8) muito lento e pesado em memória.
  */
