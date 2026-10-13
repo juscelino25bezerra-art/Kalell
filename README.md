@@ -8,7 +8,7 @@ Migração completa do PWA **Minha Escala v4.11** (agora **Kalendrium**) para um
 2. Aguarde o *Gradle Sync* (baixa Gradle 8.13, AGP 8.13.0, Kotlin 2.1.0, Compose BOM 2024.12.01). Precisa do JDK 17 (o do Android Studio serve).
 3. Rode no aparelho/emulador (▶) ou gere o APK em *Build → Build App Bundle(s) / APK(s)*.
 4. Para testar rápido use `./gradlew assembleDebug`. O release (`assembleRelease`) passa pelo R8 e é bem mais demorado, principalmente em máquinas com pouca memória.
-5. Testes da lógica e do controlador: `./gradlew test` (105 testes, incluindo os do `tests/run.js` do PWA e os de endurecimento da auditoria 5.3).
+5. Testes da lógica e do controlador: `./gradlew test` (108 testes, incluindo os do `tests/run.js` do PWA e os de endurecimento da auditoria 5.3).
 6. Testes no aparelho/emulador: `./gradlew connectedAndroidTest` (gravação atômica dos arquivos e interface).
 
 `applicationId` = `com.kalendrium`, versão 6.0 (`versionCode 7`), `minSdk 24`, `compileSdk`/`targetSdk 36` (exigido pela Play Store para apps novos e atualizações desde 31/08/2026).
@@ -65,7 +65,7 @@ O nome do usuário e a aba ficam só no aparelho, fora do backup.
 
 ## Visual (redesign)
 
-- Fonte **Manrope** embutida em `res/font` (licença SIL OFL em `docs/MANROPE-OFL.txt`), aplicada em todo o app pelo `AppTheme`.
+- Fonte **Manrope** embutida em `res/font` (licença SIL OFL em `third_party/licenses/manrope/OFL.txt`), aplicada em todo o app pelo `AppTheme`.
 - Card de hoje na cor primária: situação do dia em destaque, resumo abaixo e a barrinha com o dia atual dentro do bloco (some em férias/licenças e em blocos com mais de 14 dias).
 - Topo só com o título, visualização e ajustes; Pessoal | Work na largura toda e o card de hoje rolam junto com o calendário.
 - Tela levemente tingida com cartões claros por cima (no escuro, o contrário), como no Material 3.
@@ -182,6 +182,26 @@ em estilo Material flat, sem transparência ou brilho. Cores: fundo azul profund
 - Play Store: `docs/icone/ic_launcher-playstore.png` (512×512). Para regenerar tudo: `python3 docs/icone/gerador/gerar_icones.py`
   `app/src/main docs/icone` (precisa de cairosvg). O ícone anterior (calendário com "K") continua em `docs/icone/` só como histórico.
 
-## Créditos e licenças
+## Licença, créditos e componentes de terceiros
 
-Todas as bibliotecas, a fonte, os ícones e as paletas de cores usadas no Kalendrium, com licença e link para cada projeto, estão em [docs/CREDITOS.md](docs/CREDITOS.md). A mesma lista aparece no app em Ajustes › Sobre.
+**Licença:** o Kalendrium é software livre sob a **GNU GPL versão 3 ou posterior** (`GPL-3.0-or-later`), Copyright (C) 2026 Juscelino Be. Texto completo em [LICENSE](LICENSE); cada arquivo de código traz o cabeçalho `SPDX-License-Identifier`. A exceção é `ui/AppIcons.kt`, que contém ícones do Material Icons e continua sob a Apache 2.0.
+
+**Terceiros:** bibliotecas (AndroidX, Kotlin, kotlinx, desugar_jdk_libs), a fonte Manrope, os ícones Material e as paletas de cores, com versão, origem, licença e obrigações, estão em [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Os textos originais das licenças ficam em [third_party/licenses/](third_party/licenses/).
+
+**No app:** *Ajustes › Sobre* lista os projetos usados e, em **Licenças**, mostra a GPL do Kalendrium e os avisos e licenças de terceiros completos, sem internet.
+
+**Código-fonte do desugar_jdk_libs:** o código dele vai dentro do APK (GPL 2.0 com Classpath Exception); cada release publicado pelo workflow leva o código-fonte correspondente anexado ao lado do APK ([SOURCE.txt](third_party/licenses/desugar_jdk_libs/SOURCE.txt)).
+
+**Auditoria automática:** o workflow *Auditoria de licenças* roda em cada pull request, em mudanças de dependências e manualmente: gera o SBOM CycloneDX (`build/reports/sbom.json`, no artefato da execução) e falha se aparecer dependência ou versão nova sem revisão, licença desconhecida ou incompatível no APK, ou aviso faltando no app. Para reproduzir localmente:
+
+```sh
+./gradlew --init-script tools/license-audit/audit.init.gradle.kts :app:cyclonedxDirectBom :app:kalResolvedDependencies
+python3 tools/license-audit/check_licenses.py
+./gradlew :app:dependencies --configuration releaseRuntimeClasspath
+```
+
+Relatório completo da auditoria: [docs/OPEN_SOURCE_COMPLIANCE_AUDIT.md](docs/OPEN_SOURCE_COMPLIANCE_AUDIT.md).
+
+**Contribuições:** ao propor uma mudança, você concorda em licenciá-la sob a GPL-3.0-or-later. Não adicione dependências, fontes, ícones ou código copiado sem registrar origem e licença em `THIRD_PARTY_NOTICES.md`, `ui/Credits.kt`, `assets/licenca/TERCEIROS.txt` e `third_party/license-policy.json` (o CI aponta o que faltar). Nada de telemetria, analytics ou serviços externos.
+
+**Problema de licença?** Abra uma *issue* com o título começando por **[licença]**, indicando o arquivo ou a dependência e a fonte da informação.

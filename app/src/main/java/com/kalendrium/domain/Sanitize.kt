@@ -1,3 +1,6 @@
+// Kalendrium — Copyright (C) 2026 Juscelino Be
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 package com.kalendrium.domain
 
 import kotlinx.serialization.json.JsonArray

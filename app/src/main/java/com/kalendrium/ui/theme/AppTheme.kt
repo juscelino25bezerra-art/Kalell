@@ -1,3 +1,6 @@
+// Kalendrium — Copyright (C) 2026 Juscelino Be
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 package com.kalendrium.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -51,7 +54,7 @@ data class AppLook(val colors: AppColors, val sc: Color) {
     val card get() = if (colors.dark) colors.surfaceContainer else colors.surface
 }
 
-/** Manrope (SIL OFL, docs/MANROPE-OFL.txt): fonte do redesign, embutida no APK para funcionar sem internet. */
+/** Manrope (SIL OFL, third_party/licenses/manrope/OFL.txt): fonte do redesign, embutida no APK para funcionar sem internet. */
 val Manrope = FontFamily(
     Font(R.font.manrope_regular, FontWeight.Normal),
     Font(R.font.manrope_medium, FontWeight.Medium),

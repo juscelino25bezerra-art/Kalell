@@ -1,3 +1,6 @@
+# Kalendrium — Copyright (C) 2026 Juscelino Be
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
 # Gera o ícone "Dia e noite" do Kalendrium: sol e lua sobre uma faixa de semana (escala 2×2), estilo Material flat.
 # Todas as coordenadas estão na grade de 108 unidades do ícone adaptativo; o desenho cabe na zona segura de 66 dp,
 # então nenhuma máscara (círculo, squircle, quadrado) corta nada.

@@ -1,3 +1,6 @@
+// Kalendrium — Copyright (C) 2026 Juscelino Be
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
