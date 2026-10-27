@@ -19,7 +19,7 @@
         android:localeConfig="@xml/locales_config"
         android:supportsRtl="false"
         android:enableOnBackInvokedCallback="true"
-        android:theme="@style/Theme.Kalendrium">
+        android:theme="@style/Theme.Kalell">
 
         <activity
             android:name=".app.MainActivity"

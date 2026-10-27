@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-# Kalendrium — Copyright (C) 2026 Juscelino Be
+# Kalell — Copyright (C) 2026 Juscelino Be
 # SPDX-License-Identifier: GPL-3.0-or-later
 """
-Confere as licenças das dependências do Kalendrium contra a política revisada em
+Confere as licenças das dependências do Kalell contra a política revisada em
 third_party/license-policy.json. Só usa a biblioteca padrão do Python.
 
 Entradas (geradas por tools/license-audit/audit.init.gradle.kts):
@@ -170,7 +170,7 @@ def main():
             warnings.append(f"Regra `{r['match']}` não corresponde a nenhuma dependência resolvida (política desatualizada?).")
 
     counts = {s: sum(1 for c in scope.values() if c == s) for s in ("release", "debug", "test")}
-    out = ["# Auditoria de licenças — Kalendrium", "",
+    out = ["# Auditoria de licenças — Kalell", "",
            f"Componentes resolvidos: **{len(scope)}** — APK de release: {counts['release']}, "
            f"só debug: {counts['debug']}, só testes: {counts['test']}.", "",
            f"Resultado: **{'FALHOU' if errors else 'OK'}** ({len(errors)} erro(s), {len(warnings)} aviso(s)).", ""]

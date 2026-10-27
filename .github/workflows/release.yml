@@ -1,4 +1,4 @@
-# Kalendrium — Copyright (C) 2026 Juscelino Be
+# Kalell — Copyright (C) 2026 Juscelino Be
 # SPDX-License-Identifier: GPL-3.0-or-later
 name: Release
 
@@ -6,7 +6,7 @@ name: Release
 # - push de uma tag v* (ex.: v6.0.1) → release com esse nome
 # - "Run workflow" na aba Actions → pré-release teste-<número da execução>
 # - pull request → só builda e anexa o APK à execução (não publica)
-# Assina com os secrets KALENDRIUM_* se existirem; senão, com a chave de TESTE em ci/ (ver ci/README.md).
+# Assina com os secrets KALELL_* se existirem; senão, com a chave de TESTE em ci/ (ver ci/README.md).
 # Cada release publicado leva também o código-fonte do desugar_jdk_libs (GPL 2.0 com Classpath Exception),
 # cujo código vai dentro do APK: ver third_party/licenses/desugar_jdk_libs/SOURCE.txt.
 # Actions fixadas pelo SHA do commit (versão no comentário); como atualizar: .github/workflows/license-audit.yml.
@@ -38,29 +38,32 @@ jobs:
 
       - name: Preparar assinatura
         env:
-          KEYSTORE_BASE64: ${{ secrets.KALENDRIUM_KEYSTORE_BASE64 }}
-          STORE_PASSWORD: ${{ secrets.KALENDRIUM_STORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KALENDRIUM_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KALENDRIUM_KEY_PASSWORD }}
+          KEYSTORE_BASE64: ${{ secrets.KALELL_KEYSTORE_BASE64 || secrets.KALENDRIUM_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.KALELL_STORE_PASSWORD || secrets.KALENDRIUM_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KALELL_KEY_ALIAS || secrets.KALENDRIUM_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KALELL_KEY_PASSWORD || secrets.KALENDRIUM_KEY_PASSWORD }}
         run: |
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
             {
-              echo "KALENDRIUM_STORE_FILE=$RUNNER_TEMP/release.jks"
-              echo "KALENDRIUM_STORE_PASSWORD=$STORE_PASSWORD"
-              echo "KALENDRIUM_KEY_ALIAS=$KEY_ALIAS"
-              echo "KALENDRIUM_KEY_PASSWORD=$KEY_PASSWORD"
+              echo "KALELL_STORE_FILE=$RUNNER_TEMP/release.jks"
+              echo "KALELL_STORE_PASSWORD=$STORE_PASSWORD"
+              echo "KALELL_KEY_ALIAS=$KEY_ALIAS"
+              echo "KALELL_KEY_PASSWORD=$KEY_PASSWORD"
               echo "CHAVE=produção (secrets)"
             } >> "$GITHUB_ENV"
           else
             {
-              echo "KALENDRIUM_STORE_FILE=ci/kalendrium-teste.jks"
-              echo "KALENDRIUM_STORE_PASSWORD=kalendrium-teste"
-              echo "KALENDRIUM_KEY_ALIAS=kalendrium-teste"
-              echo "KALENDRIUM_KEY_PASSWORD=kalendrium-teste"
+              echo "KALELL_STORE_FILE=ci/kalendrium-teste.jks"
+              echo "KALELL_STORE_PASSWORD=kalendrium-teste"
+              echo "KALELL_KEY_ALIAS=kalendrium-teste"
+              echo "KALELL_KEY_PASSWORD=kalendrium-teste"
               echo "CHAVE=TESTE (ci/kalendrium-teste.jks)"
             } >> "$GITHUB_ENV"
           fi
+
+      - name: Testes (lógica e controlador)
+        run: ./gradlew --no-daemon testDebugUnitTest
 
       - name: Build do release
         run: ./gradlew --no-daemon assembleRelease
@@ -74,7 +77,7 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: kalendrium-release-apk
+          name: kalell-release-apk
           path: app/build/outputs/apk/release/app-release.apk
 
       - name: Publicar release
@@ -87,7 +90,7 @@ jobs:
           else
             TAG="teste-$GITHUB_RUN_NUMBER"; EXTRA="--prerelease"
           fi
-          APK="kalendrium-$TAG.apk"
+          APK="kalell-$TAG.apk"
           cp app/build/outputs/apk/release/app-release.apk "$APK"
           # código-fonte do desugar_jdk_libs que vai no APK (GPL 2.0, seção 3: no mesmo lugar que o binário)
           DV=$(sed -n 's/^desugar *= *"\(.*\)"/\1/p' gradle/libs.versions.toml)
@@ -96,5 +99,5 @@ jobs:
             echo "::error::Código-fonte do desugar_jdk_libs $DV não registrado em third_party/licenses/desugar_jdk_libs/SOURCE.txt"; exit 1; }
           SRC="desugar_jdk_libs-$DV-codigo-fonte.tar.gz"
           curl -fsSL --retry 3 -o "$SRC" "https://github.com/google/desugar_jdk_libs/archive/$DC.tar.gz"
-          gh release create "$TAG" "$APK" "$SRC" --target "$GITHUB_SHA" --title "Kalendrium $TAG" $EXTRA \
-            --notes "APK de release assinado com a chave: $CHAVE. Commit $GITHUB_SHA. Código-fonte do Kalendrium: este repositório nesta tag. $SRC: código-fonte do desugar_jdk_libs incluído no APK (GPL 2.0 com Classpath Exception)."
+          gh release create "$TAG" "$APK" "$SRC" --target "$GITHUB_SHA" --title "Kalell $TAG" $EXTRA \
+            --notes "APK de release assinado com a chave: $CHAVE. Commit $GITHUB_SHA. Código-fonte do Kalell: este repositório nesta tag. $SRC: código-fonte do desugar_jdk_libs incluído no APK (GPL 2.0 com Classpath Exception)."

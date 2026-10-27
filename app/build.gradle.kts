@@ -1,4 +1,4 @@
-// Kalendrium — Copyright (C) 2026 Juscelino Be
+// Kalell — Copyright (C) 2026 Juscelino Be
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import java.util.Properties
@@ -19,25 +19,25 @@ val signing: Map<String, String>? = run {
     val p = Properties()
     if (f.exists()) f.inputStream().use { p.load(it) }
     fun v(key: String, env: String) = p.getProperty(key) ?: System.getenv(env)
-    val store = v("storeFile", "KALENDRIUM_STORE_FILE") ?: return@run null
+    val store = v("storeFile", "KALELL_STORE_FILE") ?: return@run null
     mapOf(
         "storeFile" to store,
-        "storePassword" to (v("storePassword", "KALENDRIUM_STORE_PASSWORD") ?: ""),
-        "keyAlias" to (v("keyAlias", "KALENDRIUM_KEY_ALIAS") ?: ""),
-        "keyPassword" to (v("keyPassword", "KALENDRIUM_KEY_PASSWORD") ?: ""),
+        "storePassword" to (v("storePassword", "KALELL_STORE_PASSWORD") ?: ""),
+        "keyAlias" to (v("keyAlias", "KALELL_KEY_ALIAS") ?: ""),
+        "keyPassword" to (v("keyPassword", "KALELL_KEY_PASSWORD") ?: ""),
     )
 }
 
 android {
-    namespace = "com.kalendrium"
+    namespace = "com.kalell"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.kalendrium"
+        applicationId = "com.kalell"
         minSdk = 24
         targetSdk = 36
-        versionCode = 8
-        versionName = "6.1"
+        versionCode = 9
+        versionName = "7.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

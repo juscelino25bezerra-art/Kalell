@@ -8,8 +8,8 @@ pode assinar um APK com ela. Serve para o GitHub gerar um APK instalável sem co
 - Senha da keystore e da chave: `kalendrium-teste`
 
 **Não publique na Play Store com ela.** Para usar a chave de verdade no workflow, cadastre em
-*Settings › Secrets and variables › Actions* os secrets `KALENDRIUM_KEYSTORE_BASE64` (o `.jks` em base64:
-`base64 -w0 kalendrium-upload.jks`), `KALENDRIUM_STORE_PASSWORD`, `KALENDRIUM_KEY_ALIAS` e `KALENDRIUM_KEY_PASSWORD`.
+*Settings › Secrets and variables › Actions* os secrets `KALELL_KEYSTORE_BASE64` (o `.jks` em base64:
+`base64 -w0 kalell-upload.jks`), `KALELL_STORE_PASSWORD`, `KALELL_KEY_ALIAS` e `KALELL_KEY_PASSWORD`.
 Com eles presentes, o workflow ignora esta chave de teste.
 
 Um APK assinado com esta chave não instala por cima de um assinado com outra (e vice-versa): desinstale antes.

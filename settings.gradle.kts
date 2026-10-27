@@ -1,4 +1,4 @@
-// Kalendrium — Copyright (C) 2026 Juscelino Be
+// Kalell — Copyright (C) 2026 Juscelino Be
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 pluginManagement {
@@ -15,5 +15,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "Kalendrium"
+rootProject.name = "Kalell"
 include(":app")

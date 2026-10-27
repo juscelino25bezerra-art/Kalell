@@ -1,4 +1,4 @@
-// Kalendrium — Copyright (C) 2026 Juscelino Be
+// Kalell — Copyright (C) 2026 Juscelino Be
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // Auditoria de licenças (só no CI e quando você pede): gera o SBOM CycloneDX e a lista das versões
@@ -47,7 +47,7 @@ allprojects {
         afterEvaluate {
             tasks.named<CyclonedxDirectTask>("cyclonedxDirectBom") {
                 projectType.set(Component.Type.APPLICATION)
-                componentName.set("kalendrium")
+                componentName.set("kalell")
                 includeConfigs.set(auditedConfigs)
                 // marcado como "test" só o que aparece apenas nos classpaths de teste
                 testConfigs.set(listOf(".*UnitTest.*", ".*AndroidTest.*"))
