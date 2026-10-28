@@ -67,10 +67,9 @@ jobs:
           set -o pipefail
           # erros de compilação e testes que falharam viram anotações (aparecem no resumo da execução)
           if ! ./gradlew --no-daemon testDebugUnitTest 2>&1 | tee gradle-test.log; then
-            grep -E '^e: ' gradle-test.log | head -40 | while IFS= read -r l; do echo "::error::$l"; done
-            grep -E ' FAILED$' gradle-test.log | head -40 | while IFS= read -r l; do echo "::error::$l"; done
-            grep -A3 -E ' FAILED$' gradle-test.log | grep -vE ' FAILED$|^--$' | head -40 | while IFS= read -r l; do echo "::error::$l"; done
-            grep -E 'What went wrong|ERROR|error:|Execution failed' -A4 gradle-test.log | head -30 | while IFS= read -r l; do echo "::error::$l"; done
+            set +e +o pipefail
+            { grep -E '^e: | FAILED$' gradle-test.log; grep -A3 -E ' FAILED$' gradle-test.log | grep -vE ' FAILED$|^--$'; grep -A4 'What went wrong' gradle-test.log; } \
+              | head -60 | while IFS= read -r l; do echo "::error::$l"; done
             exit 1
           fi
 
