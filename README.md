@@ -177,8 +177,8 @@ só mudam os dados, as ações e o conteúdo de cada dia (`PersonalDayCell` / `W
 
 ## Ícone
 
-O ícone é o **"Dia e noite"**: sol e lua sobre uma faixa de semana com escala 2×2 (pontos âmbar = trabalho, azuis = folga),
-em estilo Material flat, sem transparência ou brilho. Cores: fundo azul profundo #1E3A8A, destaque âmbar #F5A524 e branco.
+O ícone é o **"Dia e noite"**: sol e lua sobre uma faixa de semana com escala 2×2 (pontos lima = trabalho, cinza = folga),
+em estilo Material flat, sem transparência ou brilho. Cores da paleta Ondas (7.0): fundo lima #C8F04A e desenho grafite #0E0F11, como o ícone do Sonivell.
 - Android 8+: ícone adaptativo em vetor (`drawable/ic_launcher_foreground.xml` sobre a cor `ic_launcher_background`); o
   desenho fica dentro da zona segura de 66 dp, então nenhuma máscara (círculo, squircle, quadrado) corta nada.
   Android 13+: versão monocromática temática (`drawable/ic_launcher_monochrome.xml`).
