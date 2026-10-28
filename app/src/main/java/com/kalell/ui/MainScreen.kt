@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -146,24 +145,17 @@ private fun BottomNav(ctl: AppController, modifier: Modifier) {
         NavTab(KIcons.Waves, L("Hoje", "Today", "Hoy"), ctl.tab == Tab.TODAY) { ctl.selectTab(Tab.TODAY) }
         NavTab(KIcons.Calendar, L("Calendário", "Calendar", "Calendario"), ctl.tab == Tab.CALENDAR) { ctl.selectTab(Tab.CALENDAR) }
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-            val shape = RoundedCornerShape(20.dp)
-            // botão central saltado, com um anel da cor da tela separando-o da barra (visual Ondas)
+            // botão central dentro da barra (sem anel e sem subir): 48dp de toque, cantos como os da barra
             Box(
-                Modifier.offset(y = (-18).dp).size(66.dp).clip(RoundedCornerShape(24.dp)).background(look.page),
+                Modifier.size(48.dp).clip(RoundedCornerShape(16.dp)).background(c.primary)
+                    .press { ctl.openEvent(if (ctl.tab == Tab.CALENDAR) Dates.iso(ctl.selected) else Dates.iso(ctl.today)) },
                 contentAlignment = Alignment.Center,
-            ) {
-                Box(
-                    Modifier.size(56.dp).clip(shape).background(c.primary)
-                        .press { ctl.openEvent(if (ctl.tab == Tab.CALENDAR) Dates.iso(ctl.selected) else Dates.iso(ctl.today)) },
-                    contentAlignment = Alignment.Center,
-                ) { Icon(KIcons.Plus, L("Novo evento", "New event", "Nuevo evento"), tint = c.onPrimary, modifier = Modifier.size(26.dp)) }
-            }
+            ) { Icon(KIcons.Plus, L("Novo evento", "New event", "Nuevo evento"), tint = c.onPrimary, modifier = Modifier.size(24.dp)) }
         }
         NavTab(KIcons.Briefcase, L("Escalas", "Schedules", "Horarios"), ctl.tab == Tab.SCHEDULES) { ctl.selectTab(Tab.SCHEDULES) }
         NavTab(KIcons.Notes, L("Notas", "Notes", "Notas"), ctl.tab == Tab.NOTES) { ctl.selectTab(Tab.NOTES) }
     }
-    // barra flutuante (visual Ondas): cartão arredondado com borda fina, longe das bordas da tela.
-    // Sem clip: o "+" central sobe 18dp acima da barra e não pode ser cortado por ela.
+    // barra flutuante (visual Ondas): cartão arredondado com borda fina, longe das bordas da tela
     Box(modifier.fillMaxWidth().navigationBarsPadding().padding(start = 16.dp, end = 16.dp, bottom = 12.dp), contentAlignment = Alignment.Center) {
         val shape = RoundedCornerShape(24.dp)
         Row(
