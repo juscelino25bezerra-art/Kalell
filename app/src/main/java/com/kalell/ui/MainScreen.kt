@@ -162,11 +162,12 @@ private fun BottomNav(ctl: AppController, modifier: Modifier) {
         NavTab(KIcons.Briefcase, L("Escalas", "Schedules", "Horarios"), ctl.tab == Tab.SCHEDULES) { ctl.selectTab(Tab.SCHEDULES) }
         NavTab(KIcons.Notes, L("Notas", "Notes", "Notas"), ctl.tab == Tab.NOTES) { ctl.selectTab(Tab.NOTES) }
     }
-    // barra flutuante (visual Ondas): cartão arredondado com borda fina, longe das bordas da tela
+    // barra flutuante (visual Ondas): cartão arredondado com borda fina, longe das bordas da tela.
+    // Sem clip: o "+" central sobe 18dp acima da barra e não pode ser cortado por ela.
     Box(modifier.fillMaxWidth().navigationBarsPadding().padding(start = 16.dp, end = 16.dp, bottom = 12.dp), contentAlignment = Alignment.Center) {
         val shape = RoundedCornerShape(24.dp)
         Row(
-            Modifier.widthIn(max = 560.dp).fillMaxWidth().height(70.dp).clip(shape).background(look.card).border(1.dp, c.outlineVar, shape).padding(horizontal = 4.dp),
+            Modifier.widthIn(max = 560.dp).fillMaxWidth().height(70.dp).background(look.card, shape).border(1.dp, c.outlineVar, shape).padding(horizontal = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) { items() }
     }
