@@ -1,7 +1,8 @@
-# Kalendrium — Copyright (C) 2026 Juscelino Be
+# Kalell — Copyright (C) 2026 Juscelino Be
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Gera o ícone "Dia e noite" do Kalendrium: sol e lua sobre uma faixa de semana (escala 2×2), estilo Material flat.
+# Gera o ícone "Dia e noite" do Kalell: sol e lua sobre uma faixa de semana (escala 2×2), estilo Material flat.
+# 7.0: cores da paleta Ondas (variante Lima: fundo lima, desenho grafite), como o ícone principal do Sonivell.
 # Todas as coordenadas estão na grade de 108 unidades do ícone adaptativo; o desenho cabe na zona segura de 66 dp,
 # então nenhuma máscara (círculo, squircle, quadrado) corta nada.
 #
@@ -10,9 +11,10 @@ import os, sys
 import cairosvg
 
 MAIN, DOCS = sys.argv[1], sys.argv[2]
-BG = "#1E3A8A"   # azul profundo (fundo)
-ACC = "#F5A524"  # âmbar (sol e dias de trabalho)
-W = "#FFFFFF"
+BG = "#C8F04A"   # lima (fundo)
+INK = "#0E0F11"  # grafite (sol, lua e faixa)
+WORKC = "#C8F04A"  # dias de trabalho: lima, recortados na faixa grafite
+OFFC = "#4A4D52"   # dias de folga: cinza
 
 def circ(cx, cy, r):
     return f"M{cx-r},{cy}a{r},{r} 0 1,0 {2*r},0a{r},{r} 0 1,0 {-2*r},0z"
@@ -28,12 +30,12 @@ OFF = [54, 63]       # pontos azuis: folga
 
 # ---------- SVG (for PNG rendering) ----------
 def svg_fg():
-    s = [f'<path d="{SUN}" fill="{ACC}"/>',
-         f'<path d="{RAYS}" stroke="{ACC}" stroke-width="2.6" stroke-linecap="round" fill="none"/>',
-         f'<path d="{MOON}" fill="{W}"/>',
-         f'<path d="{STRIP}" fill="{W}"/>']
-    s += [f'<path d="{circ(x,69,2.5)}" fill="{ACC}"/>' for x in WORK]
-    s += [f'<path d="{circ(x,69,2.5)}" fill="{BG}"/>' for x in OFF]
+    s = [f'<path d="{SUN}" fill="{INK}"/>',
+         f'<path d="{RAYS}" stroke="{INK}" stroke-width="2.6" stroke-linecap="round" fill="none"/>',
+         f'<path d="{MOON}" fill="{INK}"/>',
+         f'<path d="{STRIP}" fill="{INK}"/>']
+    s += [f'<path d="{circ(x,69,2.5)}" fill="{WORKC}"/>' for x in WORK]
+    s += [f'<path d="{circ(x,69,2.5)}" fill="{OFFC}"/>' for x in OFF]
     return "".join(s)
 
 def svg(viewbox, shape):
@@ -62,9 +64,9 @@ def p(d, fill=None, stroke=None, extra=""):
     return a + extra + " />\n"
 
 def fg_xml():
-    x = HEAD + p(SUN, ACC) + p(RAYS, stroke=ACC) + p(MOON, W) + p(STRIP, W)
-    x += "".join(p(circ(c, 69, 2.5), ACC) for c in WORK)
-    x += "".join(p(circ(c, 69, 2.5), BG) for c in OFF)
+    x = HEAD + p(SUN, INK) + p(RAYS, stroke=INK) + p(MOON, INK) + p(STRIP, INK)
+    x += "".join(p(circ(c, 69, 2.5), WORKC) for c in WORK)
+    x += "".join(p(circ(c, 69, 2.5), OFFC) for c in OFF)
     return x + "</vector>\n"
 
 def mono_xml():
@@ -74,7 +76,7 @@ def mono_xml():
     return x + "</vector>\n"
 
 ADAPTIVE = ('<?xml version="1.0" encoding="utf-8"?>\n'
-            '<!-- Ícone (docs/icone/gerador/gerar_icones.py): sol e lua sobre faixa de semana, fundo azul profundo. -->\n'
+            '<!-- Ícone (docs/icone/gerador/gerar_icones.py): sol e lua sobre faixa de semana, grafite sobre lima (paleta Ondas). -->\n'
             f'<adaptive-icon {NS}>\n'
             '    <background android:drawable="@color/ic_launcher_background" />\n'
             '    <foreground android:drawable="@drawable/ic_launcher_foreground" />\n'

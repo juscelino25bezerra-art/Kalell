@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Ícone (docs/icone/gerador/gerar_icones.py): sol e lua sobre faixa de semana, fundo azul profundo. -->
+<!-- Ícone (docs/icone/gerador/gerar_icones.py): sol e lua sobre faixa de semana, grafite sobre lima (paleta Ondas). -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@color/ic_launcher_background" />
     <foreground android:drawable="@drawable/ic_launcher_foreground" />
