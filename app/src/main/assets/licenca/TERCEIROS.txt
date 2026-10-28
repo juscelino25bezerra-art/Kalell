@@ -1,7 +1,7 @@
 KALELL — AVISOS E LICENÇAS DE TERCEIROS
 
 O Kalell é software livre sob a GNU GPL versão 3 ou posterior (GPL-3.0-or-later).
-Copyright (C) 2026 Juscelino Be. Código-fonte: https://github.com/juscelino25bezerra-art/kalendrium
+Copyright (C) 2026 Juscelino Be. Código-fonte: https://github.com/juscelino25bezerra-art/Kalell
 
 Este app inclui os componentes abaixo, cada um sob a própria licença. Os avisos de copyright, os
 arquivos NOTICE e os textos das licenças estão reproduzidos sem alteração. Lista com versões, origem e
