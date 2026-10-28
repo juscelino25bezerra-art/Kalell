@@ -1,8 +1,8 @@
-# Componentes de terceiros — Kalendrium
+# Componentes de terceiros — Kalell
 
-O Kalendrium é software livre sob a **GNU GPL versão 3 ou posterior** (`GPL-3.0-or-later`, ver [`LICENSE`](LICENSE)), Copyright (C) 2026 Juscelino Be. Este arquivo lista tudo de terceiros que compõe o app, com versão, origem, licença e o que cada licença exige. Cada componente continua sob a própria licença.
+O Kalell é software livre sob a **GNU GPL versão 3 ou posterior** (`GPL-3.0-or-later`, ver [`LICENSE`](LICENSE)), Copyright (C) 2026 Juscelino Be. Este arquivo lista tudo de terceiros que compõe o app, com versão, origem, licença e o que cada licença exige. Cada componente continua sob a própria licença.
 
-- **Dentro do app:** *Ajustes › Sobre* mostra os projetos usados (lista em [`Credits.kt`](app/src/main/java/com/kalendrium/ui/Credits.kt)) e, em **Licenças**, a GPL do Kalendrium e os avisos de terceiros com os textos completos, sem internet ([`assets/licenca/`](app/src/main/assets/licenca/)).
+- **Dentro do app:** *Ajustes › Sobre* mostra os projetos usados (lista em [`Credits.kt`](app/src/main/java/com/kalell/ui/Credits.kt)) e, em **Licenças**, a GPL do Kalell e os avisos de terceiros com os textos completos, sem internet ([`assets/licenca/`](app/src/main/assets/licenca/)).
 - **Textos originais:** [`third_party/licenses/`](third_party/licenses/), copiados das fontes primárias indicadas abaixo, sem alteração.
 - **Conferência automática:** o workflow [*Auditoria de licenças*](.github/workflows/license-audit.yml) gera o SBOM CycloneDX e falha se aparecer dependência ou versão nova sem revisão, licença desconhecida ou alterada, licença incompatível no APK ou aviso faltando no app. Política revisada: [`third_party/license-policy.json`](third_party/license-policy.json).
 - **Relatório da auditoria:** [`docs/OPEN_SOURCE_COMPLIANCE_AUDIT.md`](docs/OPEN_SOURCE_COMPLIANCE_AUDIT.md).
@@ -12,7 +12,7 @@ Versões: as **efetivamente resolvidas** pelo Gradle na versão 6.1 (`releaseRun
 
 ## 1. Distribuídos no APK
 
-| Componente | Versão | Origem | Licença (SPDX) | Titular / aviso | Obrigações | Alteração pelo Kalendrium | Para que serve |
+| Componente | Versão | Origem | Licença (SPDX) | Titular / aviso | Obrigações | Alteração pelo Kalell | Para que serve |
 |---|---|---|---|---|---|---|---|
 | **AndroidX (Jetpack)**: Core, Activity, Lifecycle, Compose (UI, Foundation, Animation, Runtime, Material 3, Material Icons Core, Ripple) e as dependências AndroidX que eles trazem (lista abaixo) | Compose BOM 2024.12.01 (Compose 1.7.6, Material 3 1.3.1); Core 1.15.0; Activity 1.9.3; Lifecycle 2.8.7 | https://github.com/androidx/androidx | Apache-2.0 | The Android Open Source Project | Cópia da licença | Nenhuma | Base do app e interface |
 | ↳ `androidx.graphics:graphics-path`: biblioteca nativa `libandroidx.graphics.path.so` (arm64-v8a, armeabi-v7a, x86, x86_64) | 1.0.1 | AOSP | Apache-2.0 | The Android Open Source Project | Cópia da licença | Nenhuma | Desenho de formas no Compose |
@@ -24,7 +24,8 @@ Versões: as **efetivamente resolvidas** pelo Gradle na versão 6.1 (`releaseRun
 | **desugar_jdk_libs** (código copiado para o APK pelo R8/L8: ~141 classes `j$.time`) | 2.1.3 | https://github.com/google/desugar_jdk_libs, commit `3302248e2780372a647789d714e03b02dcf559e7` | GPL-2.0-only WITH Classpath-exception-2.0 (no POM: `GPL-2.0-with-classpath-exception`) | Oracle and/or its affiliates (OpenJDK); Google | Cópia da licença; **código-fonte correspondente** junto ao binário (anexado a cada release, ver [`SOURCE.txt`](third_party/licenses/desugar_jdk_libs/SOURCE.txt)) | Nenhuma | `java.time` (datas) no Android 7 |
 | ↳ Aviso do ThreeTen (JSR-310) nos arquivos do `java.time` | — | Projeto ThreeTen, via OpenJDK | BSD-3-Clause (aviso que acompanhava o original; o código segue a GPL-2.0) | Copyright (c) 2007-2012, Stephen Colebourne & Michael Nascimento Santos | **Reproduzir o aviso na documentação do binário** | Nenhuma | Parte do desugar_jdk_libs |
 | **Manrope** (Regular, Medium, SemiBold, Bold, ExtraBold em `res/font`) | 4.505 | https://github.com/googlefonts/manrope | OFL-1.1 | Copyright 2018 The Manrope Project Authors (2019 nos metadados das fontes) | **Distribuir o texto da OFL com a fonte**; não vender a fonte sozinha | Nenhuma (arquivos originais) | Fonte de todo o app |
-| **Material Design Icons**: Schedule, GridView, BrightnessMedium, CalendarMonth, CalendarToday, DarkMode, LightMode, Today (Outlined, em [`AppIcons.kt`](app/src/main/java/com/kalendrium/ui/AppIcons.kt)) e "event" (notificação, [`ic_stat_event.xml`](app/src/main/res/drawable/ic_stat_event.xml)) | `master` de google/material-design-icons (conferido em 13/10/2026) | https://github.com/google/material-design-icons | Apache-2.0 | Google | Cópia da licença; **aviso de modificação nos arquivos alterados** | Forma do código (objeto `AppIcons`, `by lazy`) e cor branca na notificação; desenhos idênticos aos originais (conferidos pixel a pixel), anotado no topo de cada arquivo | Ícones da interface |
+| **Space Grotesk** (Medium e Bold em `res/font`) | 2.000 | https://github.com/floriankarsten/space-grotesk | OFL-1.1 | Copyright 2020 The Space Grotesk Project Authors | **Distribuir o texto da OFL com a fonte** ([`third_party/licenses/space-grotesk/OFL.txt`](third_party/licenses/space-grotesk/OFL.txt)); não vender a fonte sozinha | Nenhuma (arquivos originais) | Títulos e números de destaque |
+| **Material Design Icons**: Schedule, GridView, BrightnessMedium, CalendarMonth, CalendarToday, DarkMode, LightMode, Today (Outlined, em [`AppIcons.kt`](app/src/main/java/com/kalell/ui/AppIcons.kt)) e "event" (notificação, [`ic_stat_event.xml`](app/src/main/res/drawable/ic_stat_event.xml)) | `master` de google/material-design-icons (conferido em 13/10/2026) | https://github.com/google/material-design-icons | Apache-2.0 | Google | Cópia da licença; **aviso de modificação nos arquivos alterados** | Forma do código (objeto `AppIcons`, `by lazy`) e cor branca na notificação; desenhos idênticos aos originais (conferidos pixel a pixel), anotado no topo de cada arquivo | Ícones da interface |
 
 `com.android.tools:desugar_jdk_libs_configuration` 2.1.3 (BSD-3-Clause) também é resolvido pelo build, mas é só a configuração do L8: nenhuma classe dele está no APK (conferido no APK de release em 13/10/2026).
 
@@ -48,7 +49,7 @@ activity, activity-ktx, activity-compose (1.9.3) · annotation, annotation-jvm (
 
 ## 4. Paletas de cores
 
-As paletas usam valores de cor inspirados nestes temas, adaptados para claro e escuro ([`Palettes.kt`](app/src/main/java/com/kalendrium/ui/theme/Palettes.kt)). Nenhum arquivo desses projetos é copiado; os créditos ficam como reconhecimento. A paleta **Kalendrium** é própria.
+As paletas usam valores de cor inspirados nestes temas, adaptados para claro e escuro ([`Palettes.kt`](app/src/main/java/com/kalell/ui/theme/Palettes.kt)). Nenhum arquivo desses projetos é copiado; os créditos ficam como reconhecimento. As paletas **Ondas** e **Noite** são próprias.
 
 | Paleta | Autor | Licença do projeto | Repositório |
 |---|---|---|---|
@@ -67,9 +68,9 @@ As paletas usam valores de cor inspirados nestes temas, adaptados para claro e e
 
 Gradle 8.13 (Apache-2.0, wrapper com `distributionSha256Sum` e conferido no CI), Android Gradle Plugin 8.13.0 (Apache-2.0), compilador Kotlin e plugin do Compose 2.1.0 (Apache-2.0) e, só na auditoria do CI, CycloneDX Gradle Plugin 3.5.1 (Apache-2.0). Usadas para compilar; não entram no APK.
 
-## 6. Ícone e identidade do Kalendrium
+## 6. Ícone e identidade do Kalell
 
-O ícone do app ("Dia e noite"), o gerador em [`docs/icone/gerador/`](docs/icone/gerador/) e as imagens em `docs/icone/` são criação própria do Kalendrium, sob a GPL-3.0-or-later.
+O ícone do app ("Dia e noite"), o gerador em [`docs/icone/gerador/`](docs/icone/gerador/) e as imagens em `docs/icone/` são criação própria do Kalell, sob a GPL-3.0-or-later.
 
 ## Relatar um problema de licença
 

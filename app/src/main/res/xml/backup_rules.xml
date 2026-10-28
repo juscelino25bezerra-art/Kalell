@@ -7,5 +7,5 @@
 <full-backup-content>
     <include domain="file" path="data/" requireFlags="clientSideEncryption" />
     <!-- idioma do app: cada aparelho segue o próprio (README › Idiomas) -->
-    <exclude domain="file" path="data/kalendrium.lang.json" />
+    <exclude domain="file" path="data/kalell.lang.json" />
 </full-backup-content>

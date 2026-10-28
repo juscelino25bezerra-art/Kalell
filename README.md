@@ -1,26 +1,30 @@
-# Kalendrium — Android nativo (Kotlin + Jetpack Compose)
+# Kalell — Android nativo (Kotlin + Jetpack Compose)
 
-Migração completa do PWA **Minha Escala v4.11** (agora **Kalendrium**) para um app Android nativo, mantendo layout, regras e formato de dados.
+Migração completa do PWA **Minha Escala v4.11** (agora **Kalell**) para um app Android nativo, mantendo layout, regras e formato de dados.
 
 ## Abrir e gerar o APK
 
-1. Abra a pasta `Kalendrium` no **Android Studio** (Narwhal 2025.1.3 ou mais novo, por causa do AGP 8.13).
+1. Abra a pasta `Kalell` no **Android Studio** (Narwhal 2025.1.3 ou mais novo, por causa do AGP 8.13).
 2. Aguarde o *Gradle Sync* (baixa Gradle 8.13, AGP 8.13.0, Kotlin 2.1.0, Compose BOM 2024.12.01). Precisa do JDK 17 (o do Android Studio serve).
 3. Rode no aparelho/emulador (▶) ou gere o APK em *Build → Build App Bundle(s) / APK(s)*.
 4. Para testar rápido use `./gradlew assembleDebug`. O release (`assembleRelease`) passa pelo R8 e é bem mais demorado, principalmente em máquinas com pouca memória.
 5. Testes da lógica e do controlador: `./gradlew test` (108 testes, incluindo os do `tests/run.js` do PWA e os de endurecimento da auditoria 5.3).
 6. Testes no aparelho/emulador: `./gradlew connectedAndroidTest` (gravação atômica dos arquivos e interface).
 
-`applicationId` = `com.kalendrium`, versão 6.0 (`versionCode 7`), `minSdk 24`, `compileSdk`/`targetSdk 36` (exigido pela Play Store para apps novos e atualizações desde 31/08/2026).
+`applicationId` = `com.kalell`, versão 7.0 (`versionCode 9`), `minSdk 24`, `compileSdk`/`targetSdk 36` (exigido pela Play Store para apps novos e atualizações desde 31/08/2026).
 Para instalar por cima do APK antigo, assine com a **mesma keystore**; com outra chave o Android pede para desinstalar antes
 (exporte um backup no app antigo e importe no novo).
+
+**7.0: Kalendrium virou Kalell.** O pacote mudou de `com.kalendrium` para `com.kalell`, então o Android trata o Kalell
+como outro app: ele instala ao lado do Kalendrium, sem levar os dados. Para trazer escalas, eventos e notas, exporte um
+backup no Kalendrium (*Ajustes › Backup*) e importe no Kalell; depois o Kalendrium pode ser desinstalado.
 
 ## Assinatura do release
 
 1. Crie a chave uma vez (guarde o arquivo e as senhas fora do projeto e com backup: sem ela não dá para atualizar o app):
-   `keytool -genkeypair -v -keystore kalendrium-upload.jks -alias kalendrium -keyalg RSA -keysize 4096 -validity 10000`
+   `keytool -genkeypair -v -keystore kalell-upload.jks -alias kalell -keyalg RSA -keysize 4096 -validity 10000`
 2. Copie `keystore.properties.example` para `keystore.properties` e preencha (o arquivo e os `.jks` estão no `.gitignore`).
-   Também dá para usar as variáveis `KALENDRIUM_STORE_FILE`, `KALENDRIUM_STORE_PASSWORD`, `KALENDRIUM_KEY_ALIAS` e `KALENDRIUM_KEY_PASSWORD`.
+   Também dá para usar as variáveis `KALELL_STORE_FILE`, `KALELL_STORE_PASSWORD`, `KALELL_KEY_ALIAS` e `KALELL_KEY_PASSWORD`.
 3. `./gradlew assembleRelease` (APK) ou `bundleRelease` (AAB para a Play Store) já saem assinados. Confira com
    `apksigner verify --print-certs app/build/outputs/apk/release/app-release.apk`.
 4. Na Play Store, ative o *Play App Signing*: a chave acima vira a chave de upload.
@@ -32,7 +36,7 @@ Sem `keystore.properties`, o release continua saindo sem assinatura, como antes.
 O workflow `.github/workflows/release.yml` gera o APK assinado e publica num GitHub Release:
 empurre uma tag (`git tag v6.0.1 && git push origin v6.0.1`) ou use *Actions › Release › Run workflow*
 (gera a pré-release `teste-N`). Sem secrets configurados ele assina com a chave **de teste** em `ci/`
-(ver `ci/README.md`); com os secrets `KALENDRIUM_*` usa a chave de verdade.
+(ver `ci/README.md`); com os secrets `KALELL_*` usa a chave de verdade.
 
 ## Play Console
 
@@ -57,7 +61,7 @@ O app segue o conceito de 4 telas (fundo azul-marinho, cartões escuros, ícones
   (4×1, 4×2, 5×2, 6×1, 12×36) sem gravar nada até tocar em Aplicar; lista de escalas, ações e histórico de eras.
 - **Notas**: próximas e anteriores, pessoais e da escala; nota rápida que acrescenta ao texto já existente no dia.
 - Escala com **horário do turno** opcional (ex.: 07:00–15:00), usado no card de hoje, nos conflitos e na agenda.
-- Paleta nova **Kalendrium** (padrão; quem usava a paleta padrão antiga passa para ela uma vez, as outras 10 continuam).
+- Paleta nova **Kalell** (padrão; quem usava a paleta padrão antiga passa para ela uma vez, as outras 10 continuam).
 
 Compatibilidade: tudo o que é novo vai em chaves novas (`paletteX`, `shiftStart`/`shiftEnd`, `category`, `repeat`,
 `until`, `location`), que o PWA e as versões anteriores ignoram; `palette` continua gravada com um valor que elas aceitam.
@@ -77,7 +81,7 @@ O nome do usuário e a aba ficam só no aparelho, fora do backup.
 ## Estrutura
 
 ```
-app/src/main/java/com/kalendrium/
+app/src/main/java/com/kalell/
   domain/   Kotlin puro (sem Android): motor do ciclo, validação, backup
     Engine.kt     status do dia, posições, mudanças, eras preservadas, remapChanges
     Sanitize.kt   cleanX/validX/sanitize portados 1:1 do app.js
@@ -118,7 +122,7 @@ Na diária do Pessoal, tocar numa hora vazia cria um evento já naquele horário
 - Mudanças a partir de uma data (só recalculam dali em diante), "Manter os dias anteriores como estão" (eras preservadas),
   remapeamento das mudanças quando os blocos são editados, avisos e confirmações com os mesmos textos.
 - Notas (500 caracteres, cor, alinhamento), feriados, períodos (férias/licenças) por escala.
-- Temas: Sistema/Claro/Escuro, paletas Kalendrium, Material You, Gruvbox, Nord, Dracula,
+- Temas: Sistema/Claro/Escuro, paletas Kalell, Material You, Gruvbox, Nord, Dracula,
   Catppuccin, Tokyo Night, Solarized, Everforest, One Dark e Rosé Pine.
 - Backup: exporta/importa **o mesmo JSON do PWA** (`app: "minha-escala"`, `version: 3`), com a mesma validação estrita,
   cópia `.bak`/`.bak2` antes de importar e "Último backup exportado".
@@ -150,8 +154,8 @@ Ajustes › **Idiomas** tem quatro opções: **Sistema** (padrão), **Português
 
 - Em "Sistema", o app segue o idioma do aparelho: português e espanhol (de qualquer país) usam esse idioma; qualquer outro usa inglês.
   Ao voltar para o app depois de trocar o idioma do aparelho, a tela já aparece no idioma novo.
-- No Android 13+, o Kalendrium também aparece em Configurações › Apps › Kalendrium › Idioma (`res/xml/locales_config.xml`).
-- A escolha fica no arquivo `kalendrium.lang` do aparelho (fora do backup, para cada celular seguir o próprio idioma).
+- No Android 13+, o Kalell também aparece em Configurações › Apps › Kalell › Idioma (`res/xml/locales_config.xml`).
+- A escolha fica no arquivo `kalell.lang` do aparelho (fora do backup, para cada celular seguir o próprio idioma).
 - Tudo é traduzido: telas, mensagens, datas (em inglês, mm/dd/aaaa e "October 6"), rótulos do ciclo, imagem compartilhada,
   PDF do ano, seletores de data e hora e notificações dos lembretes. Nomes que você digitou (escalas, eventos, notas) não mudam,
   e os dados gravados são os mesmos em qualquer idioma.
@@ -168,7 +172,7 @@ só mudam os dados, as ações e o conteúdo de cada dia (`PersonalDayCell` / `W
 - **Pessoal**: eventos, compromissos e lembretes (dia inteiro ou com horário, cor, descrição), nota por dia,
   lista do dia selecionado e lembretes com notificação do Android (AlarmManager, reagendados ao reiniciar o aparelho).
 - **Work**: a escala de trabalho de sempre (ciclos, combinação de escalas, mudanças, períodos, notas e feriados).
-- Os dados ficam em arquivos separados: `kalendrium.personal.v1` (pessoal) e `minhaEscala.material.v4` (escalas).
+- Os dados ficam em arquivos separados: `kalell.personal.v1` (pessoal) e `minhaEscala.material.v4` (escalas).
   O backup leva os dois; backups do PWA continuam importando e mantêm o calendário pessoal intacto.
 
 ## Ícone
@@ -184,11 +188,11 @@ em estilo Material flat, sem transparência ou brilho. Cores: fundo azul profund
 
 ## Licença, créditos e componentes de terceiros
 
-**Licença:** o Kalendrium é software livre sob a **GNU GPL versão 3 ou posterior** (`GPL-3.0-or-later`), Copyright (C) 2026 Juscelino Be. Texto completo em [LICENSE](LICENSE); cada arquivo de código traz o cabeçalho `SPDX-License-Identifier`. A exceção é `ui/AppIcons.kt`, que contém ícones do Material Icons e continua sob a Apache 2.0.
+**Licença:** o Kalell é software livre sob a **GNU GPL versão 3 ou posterior** (`GPL-3.0-or-later`), Copyright (C) 2026 Juscelino Be. Texto completo em [LICENSE](LICENSE); cada arquivo de código traz o cabeçalho `SPDX-License-Identifier`. A exceção é `ui/AppIcons.kt`, que contém ícones do Material Icons e continua sob a Apache 2.0.
 
 **Terceiros:** bibliotecas (AndroidX, Kotlin, kotlinx, desugar_jdk_libs), a fonte Manrope, os ícones Material e as paletas de cores, com versão, origem, licença e obrigações, estão em [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Os textos originais das licenças ficam em [third_party/licenses/](third_party/licenses/).
 
-**No app:** *Ajustes › Sobre* lista os projetos usados e, em **Licenças**, mostra a GPL do Kalendrium e os avisos e licenças de terceiros completos, sem internet.
+**No app:** *Ajustes › Sobre* lista os projetos usados e, em **Licenças**, mostra a GPL do Kalell e os avisos e licenças de terceiros completos, sem internet.
 
 **Código-fonte do desugar_jdk_libs:** o código dele vai dentro do APK (GPL 2.0 com Classpath Exception); cada release publicado pelo workflow leva o código-fonte correspondente anexado ao lado do APK ([SOURCE.txt](third_party/licenses/desugar_jdk_libs/SOURCE.txt)).
 

@@ -1,6 +1,6 @@
 {
  "_leia": [
-  "Política de licenças do Kalendrium, usada por tools/license-audit/check_licenses.py.",
+  "Política de licenças do Kalell, usada por tools/license-audit/check_licenses.py.",
   "Componentes DISTRIBUÍDOS (APK de release e de debug) têm regra exata grupo:nome, com a versão revisada:",
   "artefato novo, versão nova ou licença diferente fazem o CI falhar até alguém revisar licença, NOTICE e conteúdo.",
   "Só componentes de teste (não distribuídos) usam curinga. A primeira regra que casa vale.",

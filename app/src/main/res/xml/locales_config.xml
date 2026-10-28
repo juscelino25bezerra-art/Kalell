@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Idiomas do app: aparecem em Configurações › Apps › Kalendrium › Idioma (Android 13+). -->
+<!-- Idiomas do app: aparecem em Configurações › Apps › Kalell › Idioma (Android 13+). -->
 <locale-config xmlns:android="http://schemas.android.com/apk/res/android">
     <locale android:name="pt-BR" />
     <locale android:name="en" />
